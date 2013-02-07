@@ -10,7 +10,7 @@ class ADH_CopyCustomShapes(bpy.types.Operator):
     def poll(self, context):
         non_armatures_selected = [o.type for o in context.selected_objects
                                   if o.type != 'ARMATURE']
-        return len(context.selected_objects) < 2 or non_armatures_selected:
+        return len(context.selected_objects) < 2 or non_armatures_selected
 
     def execute(self, context):
         src_armature = context.active_object
