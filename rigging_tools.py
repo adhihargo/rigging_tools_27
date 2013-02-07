@@ -2,6 +2,8 @@ import bpy
 import rigify
 
 class ADH_CopyCustomShapes(bpy.types.Operator):
+    """Copies custom shapes from one armature to another (on bones
+    with similar name)."""
     bl_idname = 'object.copy_shapes'
     bl_label = 'Copy Custom Shapes'
     bl_options = {'REGISTER', 'UNDO'}
@@ -28,6 +30,8 @@ class ADH_CopyCustomShapes(bpy.types.Operator):
         return {'FINISHED'}
 
 class ADH_CreateHookBones(bpy.types.Operator):
+    """Creates parentless bone for each selected bone, local
+    copy-transformed. Used for lattice deformation."""
     bl_idname = 'object.create_hook_bones'
     bl_label = 'Create Hook Bones'
     bl_options = {'REGISTER', 'UNDO'}
@@ -59,6 +63,7 @@ class ADH_CreateHookBones(bpy.types.Operator):
         return {'FINISHED'}
 
 class ADH_DisplayWireForSkinnedObjects(bpy.types.Operator):
+    """Used to ease bone placement."""
     bl_idname = 'object.display_wire_if_skinned' # Ugly name, sorry.
     bl_label = 'Display Wire For Skinned Objects'
     bl_options = {'REGISTER'}
@@ -93,6 +98,8 @@ class ADH_DisplayWireForSkinnedObjects(bpy.types.Operator):
         return {'FINISHED'}
 
 class ADH_CustomShapePositionToBone(bpy.types.Operator):
+    """Sync a mesh object's position to each selected bone using it as
+    a custom shape. Depends on Rigify."""
     bl_idname = 'object.shape_to_bone'
     bl_label = 'Custom Shape Position to Bone'
     bl_options = {'REGISTER', 'UNDO'}
@@ -112,6 +119,7 @@ class ADH_CustomShapePositionToBone(bpy.types.Operator):
         return {'FINISHED'}
 
 class ADH_UseSameCustomShape(bpy.types.Operator):
+    """Copies active pose bone's custom shape to each selected pose bone."""
     bl_idname = 'object.use_same_shape'
     bl_label = 'Use Same Custom Shape'
     bl_options = {'REGISTER', 'UNDO'}
