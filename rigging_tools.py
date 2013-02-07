@@ -67,12 +67,12 @@ class ADH_DisplayWireForSkinnedObjects(bpy.types.Operator):
     """Used to ease bone placement."""
     bl_idname = 'object.display_wire_if_skinned' # Ugly name, sorry.
     bl_label = 'Display Wire For Skinned Objects'
-    bl_options = {'REGISTER'}
+    bl_options = {'REGISTER', 'UNDO'}
 
     show_wire = bpy.props.BoolProperty(
         name = 'Show Wire',
-        description = 'Toggle show wire for all objects using selected armature',
-        options = {'HIDDEN'}
+        default = False,
+        description = 'Toggle show wire for all objects using selected armature'
         )
 
     @classmethod
@@ -90,9 +90,6 @@ class ADH_DisplayWireForSkinnedObjects(bpy.types.Operator):
                             m.object == armature_obj]
             if armature_mod:
                 affected_objects.append(obj)
-        
-        if affected_objects:
-            self.show_wire = not affected_objects[0].show_wire
         
         for obj in affected_objects:
             obj.show_wire = self.show_wire
