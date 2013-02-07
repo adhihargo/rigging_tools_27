@@ -1,5 +1,6 @@
 import bpy
 import rigify
+import re
 
 class ADH_CopyCustomShapes(bpy.types.Operator):
     """Copies custom shapes from one armature to another (on bones
@@ -76,7 +77,8 @@ class ADH_DisplayWireForSkinnedObjects(bpy.types.Operator):
 
     @classmethod
     def pool(self, context):
-        return context.active_object.type == 'ARMATURE'
+        return context.active_object \
+            and context.active_object.type == 'ARMATURE'
 
     def execute(self, context):
         armature_obj = context.active_object
@@ -97,11 +99,60 @@ class ADH_DisplayWireForSkinnedObjects(bpy.types.Operator):
 
         return {'FINISHED'}
 
-class ADH_CustomShapePositionToBone(bpy.types.Operator):
+class ADH_RenameRegex(bpy.types.Operator):
+    """Renames selected objects or bones using regular
+    expressions. Depends on re, standard library module."""
+    bl_idname = 'object.rename_regex'
+    bl_label = 'Rename Regex'
+    bl_options = {'REGISTER', 'UNDO'}
+
+    regex_string = bpy.props.StringProperty(
+        name="Original",
+        description="Regex of Original Substring")
+    
+    replacement_string = bpy.props.StringProperty(
+        name="Replacement",
+        description="Replacement for Matched Substring")
+
+    def execute(self, context):
+        substring_re = re.compile(self.regex_string)
+        if context.mode == 'OBJECT':
+            item_list = context.selected_objects
+        elif context.mode == 'POSE':
+            item_list = context.selected_pose_bones
+        elif context.mode == 'EDIT_ARMATURE':
+            item_list = context.selected_bones
+        else:
+            return {'CANCELLED'}
+
+        for item in item_list:
+            item.name = substring_re.sub(self.replacement_string, item.name)
+
+        return {'FINISHED'}
+
+class ADH_SyncObjectDataNameToObject(bpy.types.Operator):
+    """Sync an object data's name to the object's. Made it easier to
+    reuse object data among separate files."""
+    bl_idname = 'object.sync_data_name_to_object'
+    bl_label = 'Sync Object Data Name To Object'
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(self, context):
+        return context.selected_objects
+
+    def execute(self, context):
+        for obj in context.selected_objects:
+            if obj and obj.data:
+                obj.data.name = obj.name
+
+        return {'FINISHED'}
+
+class ADH_SyncCustomShapePositionToBone(bpy.types.Operator):
     """Sync a mesh object's position to each selected bone using it as
     a custom shape. Depends on Rigify."""
-    bl_idname = 'object.shape_to_bone'
-    bl_label = 'Custom Shape Position to Bone'
+    bl_idname = 'object.sync_shape_position_to_bone'
+    bl_label = 'Sync Custom Shape Position to Bone'
     bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
@@ -143,7 +194,9 @@ class ADH_UseSameCustomShape(bpy.types.Operator):
 
 def register():
     bpy.utils.register_class(ADH_UseSameCustomShape)
-    bpy.utils.register_class(ADH_CustomShapePositionToBone)
+    bpy.utils.register_class(ADH_SyncCustomShapePositionToBone)
+    bpy.utils.register_class(ADH_SyncObjectDataNameToObject)
+    bpy.utils.register_class(ADH_RenameRegex)
     bpy.utils.register_class(ADH_DisplayWireForSkinnedObjects)
     bpy.utils.register_class(ADH_CreateHookBones)
     bpy.utils.register_class(ADH_CopyCustomShapes)
