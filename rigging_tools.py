@@ -2,6 +2,29 @@ import bpy
 import rigify
 import re
 
+class ADH_ApplyLattices(bpy.types.Operator):
+    """Applies all lattice modifiers, deletes all shapekeys. Used for
+    lattice-initialized shapekey creation."""
+    bl_idname = 'object.apply_lattices'
+    bl_label = 'Apply Lattices'
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(self, context):
+        return context.active_object.type == 'MESH'
+
+    def execute(self, context):
+        obj = context.active_object
+        if obj.data.shape_keys:
+            for i in range (len(obj.data.shape_keys.key_blocks), 0, -1):
+                obj.active_shape_key_index = i - 1
+                bpy.ops.object.shape_key_remove()
+        for m in obj.modifiers:
+            if m.type == 'LATTICE':
+                bpy.ops.object.modifier_apply(modifier=m.name)
+
+        return {'FINISHED'}
+
 class ADH_CopyCustomShapes(bpy.types.Operator):
     """Copies custom shapes from one armature to another (on bones
     with similar name)."""
@@ -209,5 +232,6 @@ def register():
     bpy.utils.register_class(ADH_DisplayWireForSkinnedObjects)
     bpy.utils.register_class(ADH_CreateHookBones)
     bpy.utils.register_class(ADH_CopyCustomShapes)
+    bpy.utils.register_class(ADH_ApplyLattices)
     
 register()
