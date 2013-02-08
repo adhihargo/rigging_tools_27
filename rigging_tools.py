@@ -37,6 +37,17 @@ class ADH_CreateHookBones(bpy.types.Operator):
     bl_label = 'Create Hook Bones'
     bl_options = {'REGISTER', 'UNDO'}
 
+    hook_layers = bpy.props.BoolVectorProperty(
+        name = "Hook Layers",
+        description = "Armature layers where new hooks will be placed",
+        subtype = 'LAYER',
+        size = 32,
+        default = (False, False, False, False, False, False, False, False,
+                   False, False, False, False, False, False, False, False,
+                   False, False, False, False, False, False, False, False,
+                   False, False, False, False, False, False, True , False)
+        )
+
     @classmethod
     def poll(self, context):
         return context.active_object.type == 'ARMATURE'
@@ -51,6 +62,7 @@ class ADH_CreateHookBones(bpy.types.Operator):
             hook.tail = bone.tail
             hook.bbone_x = bone.bbone_x / 2
             hook.bbone_z = bone.bbone_z / 2
+            hook.layers = self.hook_layers
         bpy.ops.object.mode_set(mode='POSE')
         for bone in context.selected_pose_bones:
             hook = context.active_object.pose.bones['hook-%s' % bone.name]
