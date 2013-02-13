@@ -131,6 +131,31 @@ class ADH_DisplayWireForSkinnedObjects(bpy.types.Operator):
 
         return {'FINISHED'}
 
+class ADH_RemoveVertexGroupsUnselectedBones(bpy.types.Operator):
+    """Removes all vertex groups other than selected bones.
+
+    Used right after automatic weight assignment, to remove unwanted
+    bone influence."""
+    bl_idname = 'object.remove_vertex_groups_unselected_bones'
+    bl_label = 'Remove Vertex Groups of Unselected Bones'
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def pool(self, context):
+        return context.selected_pose_bones != None
+
+    def execute(self, context):
+        bone_names = [b.name for b in context.selected_pose_bones]
+        affected_objects = [o for o in context.selected_objects
+                            if o.type == 'MESH']
+        
+        for obj in affected_objects:
+            for vg in obj.vertex_groups:
+                if not vg.name in bone_names:
+                    obj.vertex_groups.remove(vg)
+
+        return {'FINISHED'}
+
 class ADH_RenameRegex(bpy.types.Operator):
     """Renames selected objects or bones using regular
     expressions. Depends on re, standard library module."""
@@ -229,6 +254,7 @@ def register():
     bpy.utils.register_class(ADH_SyncCustomShapePositionToBone)
     bpy.utils.register_class(ADH_SyncObjectDataNameToObject)
     bpy.utils.register_class(ADH_RenameRegex)
+    bpy.utils.register_class(ADH_RemoveVertexGroupsUnselectedBones)
     bpy.utils.register_class(ADH_DisplayWireForSkinnedObjects)
     bpy.utils.register_class(ADH_CreateHookBones)
     bpy.utils.register_class(ADH_CopyCustomShapes)
