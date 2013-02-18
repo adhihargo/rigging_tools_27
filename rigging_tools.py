@@ -2,6 +2,39 @@ import bpy
 import rigify
 import re
 
+class ADH_AddSubdivisionSurfaceModifier(bpy.types.Operator):
+    """Add subdivision surface modifier to selected objects, if none
+    given yet."""
+    bl_idname = 'object.add_subsurf_modifier'
+    bl_label = 'Add Subdivision Surface Modifier'
+    bl_options = {'REGISTER', 'UNDO'}
+
+    show_viewport = bpy.props.BoolProperty(
+        name = 'Show in Viewport',
+        default = False,
+        description = "Show Subdivision Surface modifier's effect in viewport"
+        )
+
+    @classmethod
+    def poll(self, context):
+        return context.mode == 'OBJECT'
+
+    def execute(self, context):
+        meshes = [obj for obj in context.selected_objects
+                  if obj.type == 'MESH']
+        for obj in meshes:
+            sml = [m for m in obj.modifiers if m.type == 'SUBSURF']
+            if sml == []:
+                sm = obj.modifiers.new('Subsurf', 'SUBSURF')
+                sm.show_viewport = self.show_viewport
+                sm.show_expanded = False
+            else:
+                for sm in sml:
+                    sm.show_viewport = self.show_viewport
+                    sm.show_expanded = False
+
+        return {'FINISHED'}
+
 class ADH_ApplyLattices(bpy.types.Operator):
     """Applies all lattice modifiers, deletes all shapekeys. Used for
     lattice-initialized shapekey creation."""
@@ -260,5 +293,6 @@ def register():
     bpy.utils.register_class(ADH_CreateHookBones)
     bpy.utils.register_class(ADH_CopyCustomShapes)
     bpy.utils.register_class(ADH_ApplyLattices)
+    bpy.utils.register_class(ADH_AddSubdivisionSurfaceModifier)
     
 register()
