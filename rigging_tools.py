@@ -86,6 +86,7 @@ class ADH_CreateHookBones(bpy.types.Operator):
             hook.bbone_x = bone.bbone_x / 2
             hook.bbone_z = bone.bbone_z / 2
             hook.layers = self.hook_layers
+            hook.roll = bone.roll
         bpy.ops.object.mode_set(mode='POSE')
         for bone in context.selected_pose_bones:
             hook = context.active_object.pose.bones['hook-%s' % bone.name]
