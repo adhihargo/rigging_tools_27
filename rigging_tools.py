@@ -2,6 +2,18 @@ import bpy
 import rigify
 import re
 
+bl_info = {
+    "name": "ADH Rigging Tools",
+    "author": "Adhi Hargo",
+    "version": (1, 0, 0),
+    "blender": (2, 59, 0),
+    "location": "View3D > Tools > ADH Rigging Tools",
+    "description": "Several simple tools to aid rigging.",
+    "warning": "",
+    "wiki_url": "https://github.com/adhihargo/rigging_tools",
+    "tracker_url": "https://github.com/adhihargo/rigging_tools/issues",
+    "category": "Rigging"}
+
 class ADH_AddSubdivisionSurfaceModifier(bpy.types.Operator):
     """Add subdivision surface modifier to selected objects, if none
     given yet."""
@@ -284,15 +296,10 @@ class ADH_UseSameCustomShape(bpy.types.Operator):
         return {'FINISHED'}
 
 def register():
-    bpy.utils.register_class(ADH_UseSameCustomShape)
-    bpy.utils.register_class(ADH_SyncCustomShapePositionToBone)
-    bpy.utils.register_class(ADH_SyncObjectDataNameToObject)
-    bpy.utils.register_class(ADH_RenameRegex)
-    bpy.utils.register_class(ADH_RemoveVertexGroupsUnselectedBones)
-    bpy.utils.register_class(ADH_DisplayWireForSkinnedObjects)
-    bpy.utils.register_class(ADH_CreateHookBones)
-    bpy.utils.register_class(ADH_CopyCustomShapes)
-    bpy.utils.register_class(ADH_ApplyLattices)
-    bpy.utils.register_class(ADH_AddSubdivisionSurfaceModifier)
+    bpy.utils.register_module(__name__)
     
-register()
+def unregister():
+    bpy.utils.unregister_module(__name__)
+
+if __name__ == "__main__":
+    register()
