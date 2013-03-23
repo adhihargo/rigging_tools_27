@@ -17,7 +17,7 @@ bl_info = {
 class ADH_AddSubdivisionSurfaceModifier(bpy.types.Operator):
     """Add subdivision surface modifier to selected objects, if none
     given yet."""
-    bl_idname = 'object.add_subsurf_modifier'
+    bl_idname = 'object.adh_add_subsurf_modifier'
     bl_label = 'Add Subdivision Surface Modifier'
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -29,7 +29,8 @@ class ADH_AddSubdivisionSurfaceModifier(bpy.types.Operator):
 
     @classmethod
     def poll(self, context):
-        return context.mode == 'OBJECT'
+        return context.mode == 'OBJECT'\
+            and context.selected_objects != []
 
     def execute(self, context):
         meshes = [obj for obj in context.selected_objects
@@ -50,13 +51,15 @@ class ADH_AddSubdivisionSurfaceModifier(bpy.types.Operator):
 class ADH_ApplyLattices(bpy.types.Operator):
     """Applies all lattice modifiers, deletes all shapekeys. Used for
     lattice-initialized shapekey creation."""
-    bl_idname = 'object.apply_lattices'
+    bl_idname = 'object.adh_apply_lattices'
     bl_label = 'Apply Lattices'
     bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
     def poll(self, context):
-        return context.active_object.type == 'MESH'
+        return context.mode == 'OBJECT'\
+            and context.selected_objects != []\
+            and context.active_object.type == 'MESH'
 
     def execute(self, context):
         obj = context.active_object
@@ -73,7 +76,7 @@ class ADH_ApplyLattices(bpy.types.Operator):
 class ADH_CopyCustomShapes(bpy.types.Operator):
     """Copies custom shapes from one armature to another (on bones
     with similar name)."""
-    bl_idname = 'object.copy_shapes'
+    bl_idname = 'object.adh_copy_shapes'
     bl_label = 'Copy Custom Shapes'
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -81,7 +84,7 @@ class ADH_CopyCustomShapes(bpy.types.Operator):
     def poll(self, context):
         non_armatures_selected = [o.type for o in context.selected_objects
                                   if o.type != 'ARMATURE']
-        return len(context.selected_objects) < 2 or non_armatures_selected
+        return len(context.selected_objects) >= 2 and not non_armatures_selected
 
     def execute(self, context):
         src_armature = context.active_object
@@ -101,7 +104,7 @@ class ADH_CopyCustomShapes(bpy.types.Operator):
 class ADH_CreateCustomShape(bpy.types.Operator):
     """Creates mesh for custom shape for selected bones, at active
     bone's position, using its name as suffix."""
-    bl_idname = 'object.create_shape'
+    bl_idname = 'object.adh_create_shape'
     bl_label = 'Create Custom Shape'
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -121,7 +124,7 @@ class ADH_CreateCustomShape(bpy.types.Operator):
 class ADH_CreateHookBones(bpy.types.Operator):
     """Creates parentless bone for each selected bone, local
     copy-transformed. Used for lattice deformation."""
-    bl_idname = 'object.create_hook_bones'
+    bl_idname = 'object.adh_create_hook_bones'
     bl_label = 'Create Hook Bones'
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -166,7 +169,7 @@ class ADH_CreateHookBones(bpy.types.Operator):
 
 class ADH_DisplayWireForSkinnedObjects(bpy.types.Operator):
     """Used to ease bone placement."""
-    bl_idname = 'object.display_wire_if_skinned' # Ugly name, sorry.
+    bl_idname = 'object.adh_display_wire_if_skinned' # Ugly name, sorry.
     bl_label = 'Display Wire For Skinned Objects'
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -177,7 +180,7 @@ class ADH_DisplayWireForSkinnedObjects(bpy.types.Operator):
         )
 
     @classmethod
-    def pool(self, context):
+    def poll(self, context):
         return context.active_object \
             and context.active_object.type == 'ARMATURE'
 
@@ -202,12 +205,12 @@ class ADH_RemoveVertexGroupsUnselectedBones(bpy.types.Operator):
 
     Used right after automatic weight assignment, to remove unwanted
     bone influence."""
-    bl_idname = 'object.remove_vertex_groups_unselected_bones'
+    bl_idname = 'object.adh_remove_vertex_groups_unselected_bones'
     bl_label = 'Remove Vertex Groups of Unselected Bones'
     bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
-    def pool(self, context):
+    def poll(self, context):
         return context.selected_pose_bones != None
 
     def execute(self, context):
@@ -225,7 +228,7 @@ class ADH_RemoveVertexGroupsUnselectedBones(bpy.types.Operator):
 class ADH_RenameRegex(bpy.types.Operator):
     """Renames selected objects or bones using regular
     expressions. Depends on re, standard library module."""
-    bl_idname = 'object.rename_regex'
+    bl_idname = 'object.adh_rename_regex'
     bl_label = 'Rename Regex'
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -236,6 +239,10 @@ class ADH_RenameRegex(bpy.types.Operator):
     replacement_string = bpy.props.StringProperty(
         name="Replacement",
         description="Replacement for Matched Substring")
+
+    @classmethod
+    def poll(self, context):
+        return context.selected_objects != []
 
     def execute(self, context):
         substring_re = re.compile(self.regex_string)
@@ -256,7 +263,7 @@ class ADH_RenameRegex(bpy.types.Operator):
 class ADH_SyncObjectDataNameToObject(bpy.types.Operator):
     """Sync an object data's name to the object's. Made it easier to
     reuse object data among separate files."""
-    bl_idname = 'object.sync_data_name_to_object'
+    bl_idname = 'object.adh_sync_data_name_to_object'
     bl_label = 'Sync Object Data Name To Object'
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -274,12 +281,12 @@ class ADH_SyncObjectDataNameToObject(bpy.types.Operator):
 class ADH_SyncCustomShapePositionToBone(bpy.types.Operator):
     """Sync a mesh object's position to each selected bone using it as
     a custom shape. Depends on Rigify."""
-    bl_idname = 'object.sync_shape_position_to_bone'
+    bl_idname = 'object.adh_sync_shape_position_to_bone'
     bl_label = 'Sync Custom Shape Position to Bone'
     bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
-    def pool(self, context):
+    def poll(self, context):
         return context.active_object.type == 'ARMATURE'\
             and context.mode == 'POSE'
     
@@ -294,16 +301,18 @@ class ADH_SyncCustomShapePositionToBone(bpy.types.Operator):
 
 class ADH_UseSameCustomShape(bpy.types.Operator):
     """Copies active pose bone's custom shape to each selected pose bone."""
-    bl_idname = 'object.use_same_shape'
+    bl_idname = 'object.adh_use_same_shape'
     bl_label = 'Use Same Custom Shape'
     bl_options = {'REGISTER', 'UNDO'}
     
     @classmethod
-    def pool(self, context):
-        return context.active_object.type == 'ARMATURE'\
-            and context.mode == 'POSE'
+    def poll(self, context):
+        return context.active_pose_bone != None
 
     def execute(self, context):
+        if context.active_pose_bone == None:
+            return {'CANCELLED'}
+
         custom_shape = context.active_pose_bone.custom_shape
         for obj in context.selected_objects:
             if obj.type == 'MESH':
@@ -314,6 +323,40 @@ class ADH_UseSameCustomShape(bpy.types.Operator):
             bone.custom_shape = custom_shape
 
         return {'FINISHED'}
+
+class ADH_RiggingToolsPanel(bpy.types.Panel):
+    bl_idname = 'OBJECT_PT_ADH_rigging_tools'
+    bl_label = 'ADH Rigging Tools'
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'TOOLS'
+
+    @classmethod
+    def poll(self, context):
+        return context.object is not None
+
+    def draw(self, context):
+        layout = self.layout
+
+        row = layout.row()
+        row.operator('object.adh_rename_regex')
+
+        col = layout.column(align=1)
+        col.operator('object.adh_add_subsurf_modifier', text='Add Subsurf')
+        col.operator('object.adh_apply_lattices', text='Apply Lattices')
+
+        col = layout.column(align=1)
+        col.operator('object.adh_copy_shapes', text='Copy Custom Shapes')
+        col.operator('object.adh_use_same_shape', text='Use Same Custom Shape')
+        col.operator('object.adh_create_shape', text='Create Custom Shape')
+
+        col = layout.column(align=1)
+        col.operator('object.adh_create_hook_bones', text='Create Hook Bones')
+        col.operator('object.adh_display_wire_if_skinned', text='Display Wire')
+        col.operator('object.adh_remove_vertex_groups_unselected_bones', text='Remove Unselected VG')
+
+        col = layout.column(align=1)
+        col.operator('object.adh_sync_data_name_to_object')
+        col.operator('object.adh_sync_shape_position_to_bone')
 
 def register():
     bpy.utils.register_module(__name__)
