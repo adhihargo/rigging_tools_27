@@ -21,3 +21,4 @@ A collection of Blender operators for my personal rigging needs:
 
 - **Sync Custom Shape Position to Bone**. Sync a mesh object's position to each selected bone using it as a custom shape. Made it easier to create custom shapes with better precision. Depends on Rigify being installed.
 
+- **Use Same Custom Shape**. Copies active pose bone's custom shape to each selected pose bone. Any mesh object selected will be the custom shape, effectively assigning it to all selected objects.
