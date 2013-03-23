@@ -15,8 +15,7 @@ bl_info = {
     "category": "Rigging"}
 
 class ADH_AddSubdivisionSurfaceModifier(bpy.types.Operator):
-    """Add subdivision surface modifier to selected objects, if none
-    given yet."""
+    """Add subdivision surface modifier to selected objects, if none given yet."""
     bl_idname = 'object.adh_add_subsurf_modifier'
     bl_label = 'Add Subdivision Surface Modifier'
     bl_options = {'REGISTER', 'UNDO'}
@@ -49,8 +48,7 @@ class ADH_AddSubdivisionSurfaceModifier(bpy.types.Operator):
         return {'FINISHED'}
 
 class ADH_ApplyLattices(bpy.types.Operator):
-    """Applies all lattice modifiers, deletes all shapekeys. Used for
-    lattice-initialized shapekey creation."""
+    """Applies all lattice modifiers, deletes all shapekeys. Used for lattice-initialized shapekey creation."""
     bl_idname = 'object.adh_apply_lattices'
     bl_label = 'Apply Lattices'
     bl_options = {'REGISTER', 'UNDO'}
@@ -74,8 +72,7 @@ class ADH_ApplyLattices(bpy.types.Operator):
         return {'FINISHED'}
 
 class ADH_CopyCustomShapes(bpy.types.Operator):
-    """Copies custom shapes from one armature to another (on bones
-    with similar name)."""
+    """Copies custom shapes from one armature to another (on bones with similar name)."""
     bl_idname = 'object.adh_copy_shapes'
     bl_label = 'Copy Custom Shapes'
     bl_options = {'REGISTER', 'UNDO'}
@@ -102,8 +99,7 @@ class ADH_CopyCustomShapes(bpy.types.Operator):
         return {'FINISHED'}
 
 class ADH_CreateCustomShape(bpy.types.Operator):
-    """Creates mesh for custom shape for selected bones, at active
-    bone's position, using its name as suffix."""
+    """Creates mesh for custom shape for selected bones, at active bone's position, using its name as suffix."""
     bl_idname = 'object.adh_create_shape'
     bl_label = 'Create Custom Shape'
     bl_options = {'REGISTER', 'UNDO'}
@@ -122,8 +118,7 @@ class ADH_CreateCustomShape(bpy.types.Operator):
         pass
 
 class ADH_CreateHookBones(bpy.types.Operator):
-    """Creates parentless bone for each selected bone, local
-    copy-transformed. Used for lattice deformation."""
+    """Creates parentless bone for each selected bone, local copy-transformed. Used for lattice deformation."""
     bl_idname = 'object.adh_create_hook_bones'
     bl_label = 'Create Hook Bones'
     bl_options = {'REGISTER', 'UNDO'}
@@ -203,8 +198,7 @@ class ADH_DisplayWireForSkinnedObjects(bpy.types.Operator):
 class ADH_RemoveVertexGroupsUnselectedBones(bpy.types.Operator):
     """Removes all vertex groups other than selected bones.
 
-    Used right after automatic weight assignment, to remove unwanted
-    bone influence."""
+    Used right after automatic weight assignment, to remove unwanted bone influence."""
     bl_idname = 'object.adh_remove_vertex_groups_unselected_bones'
     bl_label = 'Remove Vertex Groups of Unselected Bones'
     bl_options = {'REGISTER', 'UNDO'}
@@ -226,8 +220,7 @@ class ADH_RemoveVertexGroupsUnselectedBones(bpy.types.Operator):
         return {'FINISHED'}
 
 class ADH_RenameRegex(bpy.types.Operator):
-    """Renames selected objects or bones using regular
-    expressions. Depends on re, standard library module."""
+    """Renames selected objects or bones using regular expressions. Depends on re, standard library module."""
     bl_idname = 'object.adh_rename_regex'
     bl_label = 'Rename Regex'
     bl_options = {'REGISTER', 'UNDO'}
@@ -261,8 +254,7 @@ class ADH_RenameRegex(bpy.types.Operator):
         return {'FINISHED'}
 
 class ADH_SyncObjectDataNameToObject(bpy.types.Operator):
-    """Sync an object data's name to the object's. Made it easier to
-    reuse object data among separate files."""
+    """Sync an object data's name to the object's. Made it easier to reuse object data among separate files."""
     bl_idname = 'object.adh_sync_data_name_to_object'
     bl_label = 'Sync Object Data Name To Object'
     bl_options = {'REGISTER', 'UNDO'}
@@ -279,8 +271,7 @@ class ADH_SyncObjectDataNameToObject(bpy.types.Operator):
         return {'FINISHED'}
 
 class ADH_SyncCustomShapePositionToBone(bpy.types.Operator):
-    """Sync a mesh object's position to each selected bone using it as
-    a custom shape. Depends on Rigify."""
+    """Sync a mesh object's position to each selected bone using it as a custom shape. Depends on Rigify."""
     bl_idname = 'object.adh_sync_shape_position_to_bone'
     bl_label = 'Sync Custom Shape Position to Bone'
     bl_options = {'REGISTER', 'UNDO'}
