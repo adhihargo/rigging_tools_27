@@ -14,6 +14,15 @@ bl_info = {
     "tracker_url": "https://github.com/adhihargo/rigging_tools/issues",
     "category": "Rigging"}
 
+bpy.types.Scene.adh_regex_search_pattern = bpy.props.StringProperty(
+    name='',
+    description='Regular pattern to match against',
+    options={'SKIP_SAVE'})
+bpy.types.Scene.adh_regex_replacement_string = bpy.props.StringProperty(
+    name='',
+    description='String to replace each match',
+    options={'SKIP_SAVE'})
+
 class ADH_AddSubdivisionSurfaceModifier(bpy.types.Operator):
     """Add subdivision surface modifier to selected objects, if none given yet."""
     bl_idname = 'object.adh_add_subsurf_modifier'
@@ -225,20 +234,12 @@ class ADH_RenameRegex(bpy.types.Operator):
     bl_label = 'Rename Regex'
     bl_options = {'REGISTER', 'UNDO'}
 
-    regex_string = bpy.props.StringProperty(
-        name="Original",
-        description="Regex of Original Substring")
-    
-    replacement_string = bpy.props.StringProperty(
-        name="Replacement",
-        description="Replacement for Matched Substring")
-
     @classmethod
     def poll(self, context):
         return context.selected_objects != []
 
     def execute(self, context):
-        substring_re = re.compile(self.regex_string)
+        substring_re = re.compile(context.scene.adh_regex_search_pattern)
         if context.mode == 'OBJECT':
             item_list = context.selected_objects
         elif context.mode == 'POSE':
@@ -249,7 +250,14 @@ class ADH_RenameRegex(bpy.types.Operator):
             return {'CANCELLED'}
 
         for item in item_list:
-            item.name = substring_re.sub(self.replacement_string, item.name)
+            item.name = substring_re.sub(context.scene.adh_regex_replacement_string,
+                                         item.name)
+
+        # In pose mode, operator's result won't show immediately. This
+        # solves it somehow: only the View3D area will refresh
+        # promptly.
+        if context.mode == 'POSE':
+            context.area.tag_redraw()
 
         return {'FINISHED'}
 
@@ -328,26 +336,28 @@ class ADH_RiggingToolsPanel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
 
-        row = layout.row()
-        row.operator('object.adh_rename_regex')
+        col = layout.column(align=1)
+        col.operator('object.adh_rename_regex')
+        col.prop(context.scene, 'adh_regex_search_pattern')
+        col.prop(context.scene, 'adh_regex_replacement_string')
 
         col = layout.column(align=1)
         col.operator('object.adh_add_subsurf_modifier', text='Add Subsurf')
-        col.operator('object.adh_apply_lattices', text='Apply Lattices')
+        col.operator('object.adh_apply_lattices')
 
         col = layout.column(align=1)
-        col.operator('object.adh_copy_shapes', text='Copy Custom Shapes')
-        col.operator('object.adh_use_same_shape', text='Use Same Custom Shape')
-        col.operator('object.adh_create_shape', text='Create Custom Shape')
+        col.operator('object.adh_copy_shapes')
+        col.operator('object.adh_use_same_shape')
+        col.operator('object.adh_create_shape')
 
         col = layout.column(align=1)
-        col.operator('object.adh_create_hook_bones', text='Create Hook Bones')
+        col.operator('object.adh_create_hook_bones')
         col.operator('object.adh_display_wire_if_skinned', text='Display Wire')
         col.operator('object.adh_remove_vertex_groups_unselected_bones', text='Remove Unselected VG')
 
         col = layout.column(align=1)
-        col.operator('object.adh_sync_data_name_to_object')
-        col.operator('object.adh_sync_shape_position_to_bone')
+        col.operator('object.adh_sync_data_name_to_object', text='ObData.name <- Ob.name')
+        col.operator('object.adh_sync_shape_position_to_bone', text='CustShape.pos <- Bone.pos')
 
 def register():
     bpy.utils.register_module(__name__)
