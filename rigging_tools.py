@@ -70,8 +70,8 @@ class ADH_ApplyLattices(bpy.types.Operator):
 
         return {'FINISHED'}
 
-class ADH_CopyCustomShape(bpy.types.Operator):
-    """Copies custom shape from one armature to another (on bones
+class ADH_CopyCustomShapes(bpy.types.Operator):
+    """Copies custom shapes from one armature to another (on bones
     with similar name)."""
     bl_idname = 'object.copy_shapes'
     bl_label = 'Copy Custom Shapes'
@@ -101,6 +101,9 @@ class ADH_CopyCustomShape(bpy.types.Operator):
 class ADH_CreateCustomShape(bpy.types.Operator):
     """Creates mesh for custom shape for selected bones, at active
     bone's position, using its name as suffix."""
+    bl_idname = 'object.create_shape'
+    bl_label = 'Create Custom Shape'
+    bl_options = {'REGISTER', 'UNDO'}
 
     widget_shape = bpy.props.EnumProperty(
         name = 'Widget Shape',
