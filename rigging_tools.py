@@ -6,7 +6,7 @@ bl_info = {
     "name": "ADH Rigging Tools",
     "author": "Adhi Hargo",
     "version": (1, 0, 0),
-    "blender": (2, 59, 0),
+    "blender": (2, 65, 0),
     "location": "View3D > Tools > ADH Rigging Tools",
     "description": "Several simple tools to aid rigging.",
     "warning": "",
@@ -70,8 +70,8 @@ class ADH_ApplyLattices(bpy.types.Operator):
 
         return {'FINISHED'}
 
-class ADH_CopyCustomShapes(bpy.types.Operator):
-    """Copies custom shapes from one armature to another (on bones
+class ADH_CopyCustomShape(bpy.types.Operator):
+    """Copies custom shape from one armature to another (on bones
     with similar name)."""
     bl_idname = 'object.copy_shapes'
     bl_label = 'Copy Custom Shapes'
@@ -97,6 +97,23 @@ class ADH_CopyCustomShapes(bpy.types.Operator):
                     pass
 
         return {'FINISHED'}
+
+class ADH_CreateCustomShape(bpy.types.Operator):
+    """Creates mesh for custom shape for selected bones, at active
+    bone's position, using its name as suffix."""
+
+    widget_shape = bpy.props.EnumProperty(
+        name = 'Widget Shape',
+        items = [('sphere', 'Sphere', 'Sphere (8x4 vertices)'),
+                 ('ring', 'Ring', 'Ring (12 vertices)')])
+
+    @classmethod
+    def poll(self, context):
+        return context.active_object.type == 'ARMATURE'\
+            and context.mode == 'POSE'
+
+    def execute(self, context):
+        pass
 
 class ADH_CreateHookBones(bpy.types.Operator):
     """Creates parentless bone for each selected bone, local
