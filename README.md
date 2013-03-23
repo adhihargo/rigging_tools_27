@@ -15,7 +15,7 @@ A collection of Blender operators for my personal rigging needs:
 
 - **Remove Vertex Groups of Unselected Bones**. In all selected mesh objects, this operator removes all vertex groups other than selected bones. Armature object must be active, in pose mode. I use it right after automatic weight assignment, to remove unwanted bone influence. This makes skinning much faster without sacrificing quality.
 
-- **Rename Regex**. Renames selected objects or bones using regular expressions. Depends on re, standard library module. It's still rough on the edges, but perfectly usable. In its current version, textfields for the substring to replace and its replacement gives the illusion that you can reuse it, but promptly reusing it undoes previous batch of replacement operations (because it's the setting of the previous run of the operator). Just re-run the operator to make the next batch of replacements.
+- **Rename Regex**. Renames selected objects or bones using regular expressions. Depends on re, standard library module. It's still rough on the edges, but perfectly usable.
 
 - **Sync Object Data Name To Object**. Sync an object data's name to the object's. Made it easier to reuse object data among separate files because there's less second-guessing (unless the object's naming is equally messy).
 
