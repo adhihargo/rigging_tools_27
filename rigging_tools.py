@@ -1,3 +1,6 @@
+# Author: Adhi Hargo (cadmus.sw@gmail.com)
+# License: GPL v2
+
 import bpy
 import rigify
 import re
