@@ -23,6 +23,7 @@ bpy.types.Scene.adh_regex_replacement_string = bpy.props.StringProperty(
     description='String to replace each match',
     options={'SKIP_SAVE'})
 
+
 class ADH_AddSubdivisionSurfaceModifier(bpy.types.Operator):
     """Add subdivision surface modifier to selected objects, if none given yet."""
     bl_idname = 'object.adh_add_subsurf_modifier'
@@ -118,13 +119,108 @@ class ADH_CreateCustomShape(bpy.types.Operator):
         items = [('sphere', 'Sphere', 'Sphere (8x4 vertices)'),
                  ('ring', 'Ring', 'Ring (12 vertices)')])
 
+    widget_size = bpy.props.FloatProperty(
+        name = 'Widget Size',
+        default = 1.0,
+        min = 0,
+        max = 2,
+        description = "Widget's scale as relative to bone.",
+        )
+
+    widget_pos = bpy.props.FloatProperty(
+        name = 'Widget Position',
+        default = 0.5,
+        min = -1,
+        max = 2,
+        description = "Widget's position along bone's length.",
+        )
+
+    widget_prefix = bpy.props.StringProperty(
+        name = 'Widget Prefix',
+        description = "Prefix for the new widget's name",
+        default = 'wgt-'
+        )
+
+    widget_layers = bpy.props.BoolVectorProperty(
+        name = "Widget Layers",
+        description = "Armature layers where new widgets will be placed",
+        subtype = 'LAYER',
+        size = 20,
+        default = [x == 19 for x in range(0, 20)]
+        )
+
     @classmethod
     def poll(self, context):
-        return context.active_object.type == 'ARMATURE'\
-            and context.mode == 'POSE'
+        return context.mode == 'POSE'\
+            and context.active_pose_bone != None
+
+    def create_widget(self, rig, bone_name, bone_transform_name):
+        """Creates an empty widget object for a bone, and returns the object. Taken with minor modification from Rigify.
+        """
+        obj_name = self.widget_prefix + bone_name
+        scene = bpy.context.scene
+        # Check if it already exists
+        if obj_name in scene.objects:
+            return None
+        else:
+            mesh = bpy.data.meshes.new(obj_name)
+            obj = bpy.data.objects.new(obj_name, mesh)
+            scene.objects.link(obj)
+
+            rigify.utils.obj_to_bone(obj, rig, bone_name)
+            obj.layers = self.widget_layers
+
+            return obj
+
+
+# --------------- Long, boring widget creation functions ---------------
+
+    def create_sphere_widget(self, rig, bone_name, size=1.0, pos=1.0, bone_transform_name=None):
+        obj = self.create_widget(rig, bone_name, bone_transform_name)
+        if obj != None:
+            verts = [(-0.7071067690849304*size, (0.0*size)+pos, 0.7071067690849304*size), (-1.0*size, (0.0*size)+pos, -4.371138828673793e-08*size), (-0.7071067690849304*size, (0.0*size)+pos, -0.7071067690849304*size), (8.742277657347586e-08*size, (0.0*size)+pos, -1.0*size), (-0.49999991059303284*size, (0.5000000596046448*size)+pos, 0.7071068286895752*size), (-0.7071067690849304*size, (0.70710688829422*size)+pos, -5.960464477539063e-08*size), (-0.49999991059303284*size, (0.5000000596046448*size)+pos, -0.7071067690849304*size), (1.593719503034663e-07*size, (0.7071068286895752*size)+pos, 0.7071068286895752*size), (1.717164792580661e-07*size, (1.0000001192092896*size)+pos, -5.960464477539063e-08*size), (1.593719503034663e-07*size, (0.7071068286895752*size)+pos, -0.7071067690849304*size), (0.5000001788139343*size, (0.4999999701976776*size)+pos, 0.7071068286895752*size), (0.7071070075035095*size, (0.7071067690849304*size)+pos, -5.960464477539063e-08*size), (0.5000001788139343*size, (0.4999999701976776*size)+pos, -0.7071067690849304*size), (0.7071069478988647*size, (-1.3516944363800576e-07*size)+pos, 0.7071068286895752*size), (1.000000238418579*size, (-1.685874053691805e-07*size)+pos, -5.960464477539063e-08*size), (0.7071069478988647*size, (-1.3516944363800576e-07*size)+pos, -0.7071067690849304*size), (0.5000000596046448*size, (-0.5000001788139343*size)+pos, 0.7071068286895752*size), (0.7071067690849304*size, (-0.7071070075035095*size)+pos, -5.960464477539063e-08*size), (0.5000000596046448*size, (-0.5000001788139343*size)+pos, -0.7071067690849304*size), (-8.989351840682502e-08*size, (-0.70710688829422*size)+pos, 0.7071068286895752*size), (-1.6545833148029487e-07*size, (-1.0000001192092896*size)+pos, -5.960464477539063e-08*size), (-8.989351840682502e-08*size, (-0.70710688829422*size)+pos, -0.7071067690849304*size), (2.5605494613500923e-08*size, (-6.181724643283815e-08*size)+pos, 1.0*size), (-0.5000001788139343*size, (-0.4999999403953552*size)+pos, 0.7071068286895752*size), (-0.7071070075035095*size, (-0.7071066498756409*size)+pos, -5.960464477539063e-08*size), (-0.5000001788139343*size, (-0.4999999403953552*size)+pos, -0.7071067690849304*size), ]
+            edges = [(0, 1), (1, 2), (2, 3), (4, 5), (5, 6), (2, 6), (0, 4), (5, 1), (7, 8), (8, 9), (6, 9), (5, 8), (7, 4), (10, 11), (11, 12), (9, 12), (10, 7), (11, 8), (13, 14), (14, 15), (12, 15), (13, 10), (14, 11), (16, 17), (17, 18), (15, 18), (16, 13), (17, 14), (19, 20), (20, 21), (18, 21), (16, 19), (20, 17), (22, 23), (23, 24), (24, 25), (21, 25), (20, 24), (23, 19), (22, 0), (22, 4), (6, 3), (22, 7), (9, 3), (22, 10), (12, 3), (22, 13), (15, 3), (22, 16), (18, 3), (22, 19), (21, 3), (25, 3), (25, 2), (0, 23), (1, 24), ]
+            faces = [(1, 0, 4, 5, ), (2, 1, 5, 6, ), (6, 5, 8, 9, ), (5, 4, 7, 8, ), (8, 7, 10, 11, ), (9, 8, 11, 12, ), (11, 10, 13, 14, ), (12, 11, 14, 15, ), (14, 13, 16, 17, ), (15, 14, 17, 18, ), (17, 16, 19, 20, ), (18, 17, 20, 21, ), (21, 20, 24, 25, ), (20, 19, 23, 24, ), (3, 2, 6, ), (0, 22, 4, ), (3, 6, 9, ), (4, 22, 7, ), (3, 9, 12, ), (7, 22, 10, ), (3, 12, 15, ), (10, 22, 13, ), (3, 15, 18, ), (13, 22, 16, ), (3, 18, 21, ), (16, 22, 19, ), (3, 21, 25, ), (19, 22, 23, ), (3, 25, 2, ), (23, 22, 0, ), (24, 23, 0, 1, ), (25, 24, 1, 2, ), ]
+
+            mesh = obj.data
+            mesh.from_pydata(verts, edges, faces)
+            mesh.update()
+            mesh.update()
+            return obj
+        else:
+            return None
+
+    def create_ring_widget(self, rig, bone_name, size=1.0, pos=1.0, bone_transform_name=None):
+        obj = self.create_widget(rig, bone_name, bone_transform_name)
+        if obj != None:
+            verts = [(0.0*size, pos, 1.0*size), (-0.5*size, pos, 0.8660253882408142*size), (-0.866025447845459*size, pos, 0.4999999701976776*size), (-1.0*size, pos, -4.371138828673793e-08*size), (-0.8660253882408142*size, pos, -0.5000000596046448*size), (-0.5000000596046448*size, pos, -0.8660253882408142*size), (-1.5099580252808664e-07*size, pos, -1.0*size), (0.4999997913837433*size, pos, -0.8660255074501038*size), (0.8660252094268799*size, pos, -0.5000002980232239*size), (1.0*size, pos, -4.649122899991198e-07*size), (0.8660256862640381*size, pos, 0.4999994933605194*size), (0.5000005960464478*size, pos, 0.8660250902175903*size), ]
+            edges = [(1, 0), (2, 1), (3, 2), (4, 3), (5, 4), (6, 5), (7, 6), (8, 7), (9, 8), (10, 9), (11, 10), (0, 11), ]
+
+            faces = []
+
+            mesh = obj.data
+            mesh.from_pydata(verts, edges, faces)
+            mesh.update()
+            mesh.update()
+            return obj
+        else:
+            return None
+
+
+# ------------ End of long, boring widget creation functions -----------
+
 
     def execute(self, context):
-        pass
+        rig = context.active_object
+        bone = context.active_pose_bone
+        if self.widget_shape == 'sphere':
+            widget = self.create_sphere_widget(rig, bone.name, self.widget_size, self.widget_pos)
+        elif self.widget_shape == 'ring':
+            widget = self.create_ring_widget(rig, bone.name, self.widget_size, self.widget_pos)
+        bone.custom_shape = widget
+
+        return {'FINISHED'}
+            
 
 class ADH_CreateHookBones(bpy.types.Operator):
     """Creates parentless bone for each selected bone, local copy-transformed. Used for lattice deformation."""
@@ -137,10 +233,7 @@ class ADH_CreateHookBones(bpy.types.Operator):
         description = "Armature layers where new hooks will be placed",
         subtype = 'LAYER',
         size = 32,
-        default = (False, False, False, False, False, False, False, False,
-                   False, False, False, False, False, False, False, False,
-                   False, False, False, False, False, False, False, False,
-                   False, False, False, False, False, False, True , False)
+        default = [x == 30 for x in range(0, 32)]
         )
 
     @classmethod
