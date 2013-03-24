@@ -115,35 +115,39 @@ class ADH_CreateCustomShape(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     widget_shape = bpy.props.EnumProperty(
-        name = 'Widget Shape',
-        items = [('sphere', 'Sphere', 'Sphere (8x4 vertices)'),
-                 ('ring', 'Ring', 'Ring (12 vertices)')])
+        name = 'Shape',
+        items = [('sphere', 'Sphere', '8x4 vertices'),
+                 ('ring', 'Ring', '12 vertices'),
+                 ('box', 'Box', '8 vertices')])
 
     widget_size = bpy.props.FloatProperty(
-        name = 'Widget Size',
+        name = 'Size',
         default = 1.0,
         min = 0,
         max = 2,
+        step = 10,
         description = "Widget's scale as relative to bone.",
         )
 
     widget_pos = bpy.props.FloatProperty(
-        name = 'Widget Position',
+        name = 'Position',
         default = 0.5,
-        min = -1,
-        max = 2,
-        description = "Widget's position along bone's length.",
+        min = -.5,
+        max = 1.5,
+        step = 5,
+        precision = 1,
+        description = "Widget's position along bone's length. 0.0 = base, 1.0 = tip.",
         )
 
     widget_prefix = bpy.props.StringProperty(
-        name = 'Widget Prefix',
+        name = 'Prefix',
         description = "Prefix for the new widget's name",
         default = 'wgt-'
         )
 
     widget_layers = bpy.props.BoolVectorProperty(
-        name = "Widget Layers",
-        description = "Armature layers where new widgets will be placed",
+        name = "Layers",
+        description = "Object layers where new widgets will be placed",
         subtype = 'LAYER',
         size = 20,
         default = [x == 19 for x in range(0, 20)]
@@ -153,6 +157,22 @@ class ADH_CreateCustomShape(bpy.types.Operator):
     def poll(self, context):
         return context.mode == 'POSE'\
             and context.active_pose_bone != None
+
+    def draw(self, context):
+        layout = self.layout
+
+        col = layout.column()
+        col.prop(self, 'widget_shape', expand=True)
+
+        col = layout.column(align=1)
+        col.prop(self, 'widget_size', slider=True)
+        col.prop(self, 'widget_pos', slider=True)
+
+        col = layout.column(align=1)
+        col.label('Prefix:')
+        col.prop(self, 'widget_prefix', text='')
+        col.label('Layers:')
+        col.prop(self, 'widget_layers', text='')
 
     def create_widget(self, rig, bone_name, bone_transform_name):
         """Creates an empty widget object for a bone, and returns the object. Taken with minor modification from Rigify.
@@ -178,7 +198,7 @@ class ADH_CreateCustomShape(bpy.types.Operator):
     def create_sphere_widget(self, rig, bone_name, size=1.0, pos=1.0, bone_transform_name=None):
         obj = self.create_widget(rig, bone_name, bone_transform_name)
         if obj != None:
-            verts = [(-0.7071067690849304*size, (0.0*size)+pos, 0.7071067690849304*size), (-1.0*size, (0.0*size)+pos, -4.371138828673793e-08*size), (-0.7071067690849304*size, (0.0*size)+pos, -0.7071067690849304*size), (8.742277657347586e-08*size, (0.0*size)+pos, -1.0*size), (-0.49999991059303284*size, (0.5000000596046448*size)+pos, 0.7071068286895752*size), (-0.7071067690849304*size, (0.70710688829422*size)+pos, -5.960464477539063e-08*size), (-0.49999991059303284*size, (0.5000000596046448*size)+pos, -0.7071067690849304*size), (1.593719503034663e-07*size, (0.7071068286895752*size)+pos, 0.7071068286895752*size), (1.717164792580661e-07*size, (1.0000001192092896*size)+pos, -5.960464477539063e-08*size), (1.593719503034663e-07*size, (0.7071068286895752*size)+pos, -0.7071067690849304*size), (0.5000001788139343*size, (0.4999999701976776*size)+pos, 0.7071068286895752*size), (0.7071070075035095*size, (0.7071067690849304*size)+pos, -5.960464477539063e-08*size), (0.5000001788139343*size, (0.4999999701976776*size)+pos, -0.7071067690849304*size), (0.7071069478988647*size, (-1.3516944363800576e-07*size)+pos, 0.7071068286895752*size), (1.000000238418579*size, (-1.685874053691805e-07*size)+pos, -5.960464477539063e-08*size), (0.7071069478988647*size, (-1.3516944363800576e-07*size)+pos, -0.7071067690849304*size), (0.5000000596046448*size, (-0.5000001788139343*size)+pos, 0.7071068286895752*size), (0.7071067690849304*size, (-0.7071070075035095*size)+pos, -5.960464477539063e-08*size), (0.5000000596046448*size, (-0.5000001788139343*size)+pos, -0.7071067690849304*size), (-8.989351840682502e-08*size, (-0.70710688829422*size)+pos, 0.7071068286895752*size), (-1.6545833148029487e-07*size, (-1.0000001192092896*size)+pos, -5.960464477539063e-08*size), (-8.989351840682502e-08*size, (-0.70710688829422*size)+pos, -0.7071067690849304*size), (2.5605494613500923e-08*size, (-6.181724643283815e-08*size)+pos, 1.0*size), (-0.5000001788139343*size, (-0.4999999403953552*size)+pos, 0.7071068286895752*size), (-0.7071070075035095*size, (-0.7071066498756409*size)+pos, -5.960464477539063e-08*size), (-0.5000001788139343*size, (-0.4999999403953552*size)+pos, -0.7071067690849304*size), ]
+            verts = [(-0.3535533845424652*size, (-0.3535533845424652*size)+pos, 2.9802322387695312e-08*size), (-0.5*size, (2.1855694143368964e-08*size)+pos, -1.7763568394002505e-15*size), (-0.3535533845424652*size, (0.3535533845424652*size)+pos, -2.9802322387695312e-08*size), (4.371138828673793e-08*size, (0.5*size)+pos, -2.9802322387695312e-08*size), (-0.24999994039535522*size, (-0.3535533845424652*size)+pos, 0.2500000596046448*size), (-0.3535533845424652*size, (5.960464477539063e-08*size)+pos, 0.35355344414711*size), (-0.24999994039535522*size, (0.3535534143447876*size)+pos, 0.2500000298023224*size), (7.968597515173315e-08*size, (-0.3535534143447876*size)+pos, 0.35355344414711*size), (8.585823962903305e-08*size, (5.960464477539063e-08*size)+pos, 0.5000001192092896*size), (7.968597515173315e-08*size, (0.3535534143447876*size)+pos, 0.3535533845424652*size), (0.25000008940696716*size, (-0.3535533547401428*size)+pos, 0.25*size), (0.35355350375175476*size, (5.960464477539063e-08*size)+pos, 0.3535533845424652*size), (0.25000008940696716*size, (0.3535534143447876*size)+pos, 0.2499999701976776*size), (0.3535534739494324*size, (-0.3535534143447876*size)+pos, -2.9802322387695312e-08*size), (0.5000001192092896*size, (2.9802315282267955e-08*size)+pos, -8.429370268459024e-08*size), (0.3535534739494324*size, (0.3535533845424652*size)+pos, -8.940696716308594e-08*size), (0.2500000298023224*size, (-0.35355344414711*size)+pos, -0.2500000596046448*size), (0.3535533845424652*size, (0.0*size)+pos, -0.35355350375175476*size), (0.2500000298023224*size, (0.35355332493782043*size)+pos, -0.25000011920928955*size), (-4.494675920341251e-08*size, (-0.35355344414711*size)+pos, -0.3535534143447876*size), (-8.27291728455748e-08*size, (0.0*size)+pos, -0.5*size), (-4.494675920341251e-08*size, (0.3535533845424652*size)+pos, -0.3535534739494324*size), (1.2802747306750462e-08*size, (-0.5*size)+pos, 0.0*size), (-0.25000008940696716*size, (-0.35355344414711*size)+pos, -0.24999994039535522*size), (-0.35355350375175476*size, (0.0*size)+pos, -0.35355332493782043*size), (-0.25000008940696716*size, (0.35355332493782043*size)+pos, -0.25*size), ]
             edges = [(0, 1), (1, 2), (2, 3), (4, 5), (5, 6), (2, 6), (0, 4), (5, 1), (7, 8), (8, 9), (6, 9), (5, 8), (7, 4), (10, 11), (11, 12), (9, 12), (10, 7), (11, 8), (13, 14), (14, 15), (12, 15), (13, 10), (14, 11), (16, 17), (17, 18), (15, 18), (16, 13), (17, 14), (19, 20), (20, 21), (18, 21), (16, 19), (20, 17), (22, 23), (23, 24), (24, 25), (21, 25), (20, 24), (23, 19), (22, 0), (22, 4), (6, 3), (22, 7), (9, 3), (22, 10), (12, 3), (22, 13), (15, 3), (22, 16), (18, 3), (22, 19), (21, 3), (25, 3), (25, 2), (0, 23), (1, 24), ]
             faces = [(1, 0, 4, 5, ), (2, 1, 5, 6, ), (6, 5, 8, 9, ), (5, 4, 7, 8, ), (8, 7, 10, 11, ), (9, 8, 11, 12, ), (11, 10, 13, 14, ), (12, 11, 14, 15, ), (14, 13, 16, 17, ), (15, 14, 17, 18, ), (17, 16, 19, 20, ), (18, 17, 20, 21, ), (21, 20, 24, 25, ), (20, 19, 23, 24, ), (3, 2, 6, ), (0, 22, 4, ), (3, 6, 9, ), (4, 22, 7, ), (3, 9, 12, ), (7, 22, 10, ), (3, 12, 15, ), (10, 22, 13, ), (3, 15, 18, ), (13, 22, 16, ), (3, 18, 21, ), (16, 22, 19, ), (3, 21, 25, ), (19, 22, 23, ), (3, 25, 2, ), (23, 22, 0, ), (24, 23, 0, 1, ), (25, 24, 1, 2, ), ]
 
@@ -195,9 +215,23 @@ class ADH_CreateCustomShape(bpy.types.Operator):
         if obj != None:
             verts = [(0.0*size, pos, 1.0*size), (-0.5*size, pos, 0.8660253882408142*size), (-0.866025447845459*size, pos, 0.4999999701976776*size), (-1.0*size, pos, -4.371138828673793e-08*size), (-0.8660253882408142*size, pos, -0.5000000596046448*size), (-0.5000000596046448*size, pos, -0.8660253882408142*size), (-1.5099580252808664e-07*size, pos, -1.0*size), (0.4999997913837433*size, pos, -0.8660255074501038*size), (0.8660252094268799*size, pos, -0.5000002980232239*size), (1.0*size, pos, -4.649122899991198e-07*size), (0.8660256862640381*size, pos, 0.4999994933605194*size), (0.5000005960464478*size, pos, 0.8660250902175903*size), ]
             edges = [(1, 0), (2, 1), (3, 2), (4, 3), (5, 4), (6, 5), (7, 6), (8, 7), (9, 8), (10, 9), (11, 10), (0, 11), ]
-
             faces = []
 
+            mesh = obj.data
+            mesh.from_pydata(verts, edges, faces)
+            mesh.update()
+            mesh.update()
+            return obj
+        else:
+            return None
+
+    def create_box_widget(self, rig, bone_name, size=1.0, pos=1.0, bone_transform_name=None):
+        obj = self.create_widget(rig, bone_name, bone_transform_name)
+        if obj != None:
+            verts = [(-0.5*size, -0.5+pos, -0.5*size), (-0.5*size, 0.5+pos, -0.5*size), (0.5*size, 0.5+pos, -0.5*size), (0.5*size, -0.5+pos, -0.5*size), (-0.5*size, -0.5+pos, 0.5*size), (-0.5*size, 0.5+pos, 0.5*size), (0.5*size, 0.5+pos, 0.5*size), (0.5*size, -0.5+pos, 0.5*size), ]
+            edges = [(4, 5), (5, 1), (1, 0), (0, 4), (5, 6), (6, 2), (2, 1), (6, 7), (7, 3), (3, 2), (7, 4), (0, 3), ]
+            faces = [(4, 5, 1, 0, ), (5, 6, 2, 1, ), (6, 7, 3, 2, ), (7, 4, 0, 3, ), (0, 1, 2, 3, ), (7, 6, 5, 4, ), ]
+            
             mesh = obj.data
             mesh.from_pydata(verts, edges, faces)
             mesh.update()
@@ -213,10 +247,8 @@ class ADH_CreateCustomShape(bpy.types.Operator):
     def execute(self, context):
         rig = context.active_object
         bone = context.active_pose_bone
-        if self.widget_shape == 'sphere':
-            widget = self.create_sphere_widget(rig, bone.name, self.widget_size, self.widget_pos)
-        elif self.widget_shape == 'ring':
-            widget = self.create_ring_widget(rig, bone.name, self.widget_size, self.widget_pos)
+        func = getattr(self, "create_%s_widget" % self.widget_shape)
+        widget = func(rig, bone.name, self.widget_size, self.widget_pos)
         bone.custom_shape = widget
 
         return {'FINISHED'}
