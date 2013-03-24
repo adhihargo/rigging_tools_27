@@ -9,6 +9,11 @@ A collection of Blender operators for my personal rigging needs:
 
 - **Copy Custom Shapes**. Copies custom shape from one armature to another (on bones with similar name). Sometimes, without knowing the cause, all custom shapes in an armature already well-fit to a character just vanishes. Gone. And it's bloody annoying to reattach them one by one, thus this operator.
 
+- **Create Custom Shape**. For selected bone, creates new custom shape object and automatically assigns it to the bone. The bone's name will become the new object's base name. We can:
+  - Choose among several simple predefined shapes,
+  - Set the object name's prefix,
+  - Set the object's size, position (along the length of bone), and scene layer.
+
 - **Create Hook Bones**. Creates parentless bone for each selected bone, local copy-transformed. My primary tool to create a lattice-based deformation with intuitive control.
 
 - **Display Wire For Skinned Objects**. When the active object is an armature, this just displays wireframe for all mesh using the armature through an Armature modifier. I use it to aid joint placement, because it's a hassle to switch back-and-forth between mesh and armature just to show wireframe. I don't use this too often, though.
