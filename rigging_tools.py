@@ -310,7 +310,8 @@ class ADH_CreateCustomShape(bpy.types.Operator):
         bone = context.active_pose_bone
         func = getattr(self, "create_%s_widget" % self.widget_shape)
         widget = func(rig, bone.name, self.widget_size, self.widget_pos, self.widget_rot)
-        bone.custom_shape = widget
+        for bone in context.selected_pose_bones:
+            bone.custom_shape = widget
 
         return {'FINISHED'}
             
