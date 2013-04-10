@@ -14,6 +14,8 @@ A collection of Blender operators for my personal rigging needs:
   - Set the object name's prefix,
   - Set the object's size, position (along the length of bone), and scene layer.
 
+- **Select Custom Shape**. For selected bone, select its custom shape object, if any. If the shape's scene layers are turned off, one is turned on. If the shape is hidden, it's made visible.
+
 - **Create Hook Bones**. Creates parentless bone for each selected bone, local copy-transformed. My primary tool to create a lattice-based deformation with intuitive control.
 
 - **Display Wire For Skinned Objects**. When the active object is an armature, this just displays wireframe for all mesh using the armature through an Armature modifier. I use it to aid joint placement, because it's a hassle to switch back-and-forth between mesh and armature just to show wireframe. I don't use this too often, though.

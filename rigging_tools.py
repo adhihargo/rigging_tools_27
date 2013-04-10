@@ -314,6 +314,30 @@ class ADH_CreateCustomShape(bpy.types.Operator):
 
         return {'FINISHED'}
             
+class ADH_SelectCustomShape(bpy.types.Operator):
+    """Selects custom shape object of active bone."""
+    bl_idname = 'object.adh_select_shape'
+    bl_label = 'Select Custom Shape'
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(self, context):
+        return context.active_pose_bone != None
+
+    def execute(self, context):
+        bone = context.active_pose_bone
+        bone_shape = bone.custom_shape
+        shape_layers = [l for l in bone_shape.layers] # can't index on bpy_prop_array
+        if bone_shape:
+            context.active_object.select = False
+            bone_shape.hide = False
+            bone_shape.select = True
+            context.scene.layers[shape_layers.index(True)] = True
+            context.scene.objects.active = bone.custom_shape
+        else:
+            return {'CANCELLED'}
+
+        return {'FINISHED'}
 
 class ADH_CreateHookBones(bpy.types.Operator):
     """Creates parentless bone for each selected bone, local copy-transformed. Used for lattice deformation."""
@@ -535,6 +559,7 @@ class ADH_RiggingToolsPanel(bpy.types.Panel):
         col.operator('object.adh_copy_shapes')
         col.operator('object.adh_use_same_shape')
         col.operator('object.adh_create_shape')
+        col.operator('object.adh_select_shape')
 
         col = layout.column(align=1)
         col.operator('object.adh_create_hook_bones')
