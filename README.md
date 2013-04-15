@@ -9,12 +9,12 @@ A collection of Blender operators for my personal rigging needs:
 
 - **Copy Custom Shapes**. Copies custom shape from one armature to another (on bones with similar name). Sometimes, without knowing the cause, all custom shapes in an armature already well-fit to a character just vanishes. Gone. And it's bloody annoying to reattach them one by one, thus this operator.
 
-- **Create Custom Shape**. For selected bone, creates new custom shape object and automatically assigns it to the bone. The bone's name will become the new object's base name. We can:
+- **Create Custom Shape**. Creates new custom shape object and automatically assigns it to all selected bones. Active bone's name will become the new object's base name. We can:
   - Choose among several simple predefined shapes,
   - Set the object name's prefix,
-  - Set the object's size, position (along the length of bone), and scene layer.
+  - Set the object's size, rotation, position (along the length of bone), and scene layer.
 
-- **Select Custom Shape**. For selected bone, select its custom shape object, if any. If the shape's scene layers are turned off, one is turned on. If the shape is hidden, it's made visible.
+- **Select Custom Shape**. Select active bone's custom shape object, if any. If the shape's scene layers are turned off, one is turned on. If the shape is hidden, it's made visible.
 
 - **Create Hook Bones**. Creates parentless bone for each selected bone, local copy-transformed. My primary tool to create a lattice-based deformation with intuitive control.
 

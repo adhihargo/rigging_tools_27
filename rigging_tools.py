@@ -121,10 +121,12 @@ class ADH_CreateCustomShape(bpy.types.Operator):
 
     widget_shape = bpy.props.EnumProperty(
         name = 'Shape',
-        items = [('sphere', 'Sphere', '8x4 vertices'),
-                 ('ring', 'Ring', '12 vertices'),
+        items = [('sphere', 'Sphere', '8x4 edges'),
+                 ('ring', 'Ring', '24 vertices'),
+                 ('square', 'Square', ''),
                  ('triangle', 'Triangle', ''),
-                 ('box', 'Box', '8 vertices'),
+                 ('bidirection', 'Bidirection', ''),
+                 ('box', 'Box', ''),
                  ('fourways', 'Four-Ways', 'Circle with arrows to four directions - 40 vertices'),
                  ('fourgaps', 'Four-Gaps', 'Broken circle that complements Four-Ways - 20 vertices')])
 
@@ -239,8 +241,28 @@ class ADH_CreateCustomShape(bpy.types.Operator):
     def create_ring_widget(self, rig, bone_name, size=1.0, pos=1.0, rot=0.0, bone_transform_name=None):
         obj = self.create_widget(rig, bone_name, bone_transform_name)
         if obj != None:
-            verts = [(0.0*size, 2.9802322387695312e-08, 0.5*size), (-0.25*size, 2.9802322387695312e-08, 0.4330126941204071*size), (-0.4330127239227295*size, 1.4901161193847656e-08, 0.2499999850988388*size), (-0.5*size, -1.7763568394002505e-15, -2.1855694143368964e-08*size), (-0.4330126941204071*size, -2.9802322387695312e-08, -0.2500000298023224*size), (-0.2500000298023224*size, -2.9802322387695312e-08, -0.4330126941204071*size), (-7.549790126404332e-08*size, -2.9802322387695312e-08, -0.5*size), (0.24999989569187164*size, -2.9802322387695312e-08, -0.4330127537250519*size), (0.43301260471343994*size, -2.9802322387695312e-08, -0.25000014901161194*size), (0.5*size, -1.4210854715202004e-14, -2.324561449995599e-07*size), (0.43301284313201904*size, 1.4901161193847656e-08, 0.2499997466802597*size), (0.2500002980232239*size, 2.9802322387695312e-08, 0.43301254510879517*size), ]
-            edges = [(1, 0), (2, 1), (3, 2), (4, 3), (5, 4), (6, 5), (7, 6), (8, 7), (9, 8), (10, 9), (11, 10), (0, 11), ]
+            
+            verts = [(0.0*size, 2.9802322387695312e-08*size, 0.5*size), (-0.129409521818161*size, 2.9802322387695312e-08*size, 0.4829629063606262*size), (-0.25*size, 2.9802322387695312e-08*size, 0.4330126941204071*size), (-0.3535533845424652*size, 2.9802322387695312e-08*size, 0.3535533845424652*size), (-0.4330127239227295*size, 1.4901161193847656e-08*size, 0.2499999850988388*size), (-0.4829629063606262*size, 1.4901161193847656e-08*size, 0.1294095367193222*size), (-0.5*size, 3.552713678800501e-15*size, 3.774895063202166e-08*size), (-0.4829629361629486*size, -1.4901161193847656e-08*size, -0.12940946221351624*size), (-0.4330127537250519*size, -1.4901161193847656e-08*size, -0.24999992549419403*size), (-0.3535534739494324*size, -2.9802322387695312e-08*size, -0.35355329513549805*size), (-0.25000011920928955*size, -2.9802322387695312e-08*size, -0.43301263451576233*size), (-0.12940968573093414*size, -2.9802322387695312e-08*size, -0.48296287655830383*size), (-1.9470718370939721e-07*size, -2.9802322387695312e-08*size, -0.5*size), (0.1294093132019043*size, -2.9802322387695312e-08*size, -0.482962965965271*size), (0.2499997913837433*size, -2.9802322387695312e-08*size, -0.43301281332969666*size), (0.3535532057285309*size, -2.9802322387695312e-08*size, -0.3535535931587219*size), (0.43301260471343994*size, -2.9802322387695312e-08*size, -0.25000014901161194*size), (0.48296284675598145*size, -1.4901161193847656e-08*size, -0.12940971553325653*size), (0.5*size, -1.4210854715202004e-14*size, -2.324561449995599e-07*size), (0.482962965965271*size, 1.4901161193847656e-08*size, 0.12940926849842072*size), (0.43301284313201904*size, 1.4901161193847656e-08*size, 0.2499997466802597*size), (0.3535536229610443*size, 2.9802322387695312e-08*size, 0.3535531759262085*size), (0.2500002980232239*size, 2.9802322387695312e-08*size, 0.43301254510879517*size), (0.12940987944602966*size, 2.9802322387695312e-08*size, 0.48296281695365906*size), ]
+            edges = [(1, 0), (2, 1), (3, 2), (4, 3), (5, 4), (6, 5), (7, 6), (8, 7), (9, 8), (10, 9), (11, 10), (12, 11), (13, 12), (14, 13), (15, 14), (16, 15), (17, 16), (18, 17), (19, 18), (20, 19), (21, 20), (22, 21), (23, 22), (0, 23), ]
+            faces = []
+            rot_mat = Matrix.Rotation(math.radians(rot), 4, 'X')
+            trans_mat = Matrix.Translation(Vector((0.0, pos, 0.0)))
+            mat = trans_mat * rot_mat
+
+            mesh = obj.data
+            mesh.from_pydata(verts, edges, faces)
+            mesh.transform(mat)
+            mesh.update()
+            mesh.update()
+            return obj
+        else:
+            return None
+
+    def create_square_widget(self, rig, bone_name, size=1.0, pos=1.0, rot=0.0, bone_transform_name=None):
+        obj = self.create_widget(rig, bone_name, bone_transform_name)
+        if obj != None:
+            verts = [(0.5*size, -0.5*size, 0.0*size), (-0.5*size, -0.5*size, 0.0*size), (0.5*size, 0.5*size, 0.0*size), (-0.5*size, 0.5*size, 0.0*size), ]
+            edges = [(0, 1), (2, 3), (0, 2), (3, 1), ]
             faces = []
             rot_mat = Matrix.Rotation(math.radians(rot), 4, 'X')
             trans_mat = Matrix.Translation(Vector((0.0, pos, 0.0)))
@@ -260,6 +282,25 @@ class ADH_CreateCustomShape(bpy.types.Operator):
         if obj != None:
             verts = [(0.0*size, 0.0*size, 0.0), (0.6*size, 1.0*size, 0.0), (-0.6*size, 1.0*size, 0.0), ]
             edges = [(1, 2), (0, 1), (2, 0), ]
+            faces = []
+            rot_mat = Matrix.Rotation(math.radians(rot), 4, 'X')
+            trans_mat = Matrix.Translation(Vector((0.0, pos, 0.0)))
+            mat = trans_mat * rot_mat
+
+            mesh = obj.data
+            mesh.from_pydata(verts, edges, faces)
+            mesh.transform(mat)
+            mesh.update()
+            mesh.update()
+            return obj
+        else:
+            return None
+
+    def create_bidirection_widget(self, rig, bone_name, size=1.0, pos=1.0, rot=0.0, bone_transform_name=None):
+        obj = self.create_widget(rig, bone_name, bone_transform_name)
+        if obj != None:
+            verts = [(0.0*size, -0.5*size, 0.0*size), (0.0*size, 0.5*size, 0.0*size), (0.15000000596046448*size, -0.3499999940395355*size, 0.0*size), (-0.15000000596046448*size, 0.3499999940395355*size, 0.0*size), (0.15000000596046448*size, 0.3499999940395355*size, 0.0*size), (-0.15000000596046448*size, -0.3499999940395355*size, 0.0*size), ]
+            edges = [(2, 0), (4, 1), (5, 0), (3, 1), (0, 1), ]
             faces = []
             rot_mat = Matrix.Rotation(math.radians(rot), 4, 'X')
             trans_mat = Matrix.Translation(Vector((0.0, pos, 0.0)))
