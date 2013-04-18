@@ -19,16 +19,6 @@ bl_info = {
     "tracker_url": "https://github.com/adhihargo/rigging_tools/issues",
     "category": "Rigging"}
 
-bpy.types.Scene.adh_regex_search_pattern = bpy.props.StringProperty(
-    name='',
-    description='Regular pattern to match against',
-    options={'SKIP_SAVE'})
-bpy.types.Scene.adh_regex_replacement_string = bpy.props.StringProperty(
-    name='',
-    description='String to replace each match',
-    options={'SKIP_SAVE'})
-
-
 class ADH_AddSubdivisionSurfaceModifier(bpy.types.Operator):
     """Add subdivision surface modifier to selected objects, if none given yet."""
     bl_idname = 'object.adh_add_subsurf_modifier'
@@ -522,7 +512,9 @@ class ADH_RenameRegex(bpy.types.Operator):
         return context.selected_objects != []
 
     def execute(self, context):
-        substring_re = re.compile(context.scene.adh_regex_search_pattern)
+        search_str = context.scene.adh_rigging_tools.regex_search_pattern
+        replacement_str = context.scene.adh_rigging_tools.regex_replacement_string
+        substring_re = re.compile(search_str)
         if context.mode == 'OBJECT':
             item_list = context.selected_objects
         elif context.mode == 'POSE':
@@ -533,8 +525,7 @@ class ADH_RenameRegex(bpy.types.Operator):
             return {'CANCELLED'}
 
         for item in item_list:
-            item.name = substring_re.sub(context.scene.adh_regex_replacement_string,
-                                         item.name)
+            item.name = substring_re.sub(replacement_str, item.name)
 
         # In pose mode, operator's result won't show immediately. This
         # solves it somehow: only the View3D area will refresh
@@ -621,8 +612,8 @@ class ADH_RiggingToolsPanel(bpy.types.Panel):
 
         col = layout.column(align=1)
         col.operator('object.adh_rename_regex')
-        col.prop(context.scene, 'adh_regex_search_pattern')
-        col.prop(context.scene, 'adh_regex_replacement_string')
+        col.prop(context.scene.adh_rigging_tools, 'regex_search_pattern')
+        col.prop(context.scene.adh_rigging_tools, 'regex_replacement_string')
 
         col = layout.column(align=1)
         col.operator('object.adh_add_subsurf_modifier', text='Add Subsurf')
@@ -643,8 +634,28 @@ class ADH_RiggingToolsPanel(bpy.types.Panel):
         col.operator('object.adh_sync_data_name_to_object', text='ObData.name <- Ob.name')
         col.operator('object.adh_sync_shape_position_to_bone', text='CustShape.pos <- Bone.pos')
 
+class ADH_RiggingToolsProps(bpy.types.PropertyGroup):
+    regex_search_pattern = bpy.props.StringProperty(
+        name='',
+        description='Regular pattern to match against',
+        options={'SKIP_SAVE'})
+    regex_replacement_string = bpy.props.StringProperty(
+        name='',
+        description='String to replace each match',
+        options={'SKIP_SAVE'})
+
 def register():
     bpy.utils.register_module(__name__)
+
+    bpy.types.Scene.adh_rigging_tools = bpy.props.PointerProperty(type = ADH_RiggingToolsProps)
+    bpy.types.Scene.adh_regex_search_pattern = bpy.props.StringProperty(
+        name='',
+        description='Regular pattern to match against',
+        options={'SKIP_SAVE'})
+    bpy.types.Scene.adh_regex_replacement_string = bpy.props.StringProperty(
+        name='',
+        description='String to replace each match',
+        options={'SKIP_SAVE'})
     
 def unregister():
     bpy.utils.unregister_module(__name__)
