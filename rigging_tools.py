@@ -461,39 +461,6 @@ class ADH_CreateHookBones(bpy.types.Operator):
 
         return {'FINISHED'}
 
-class ADH_DisplayWireForSkinnedObjects(bpy.types.Operator):
-    """Used to ease bone placement."""
-    bl_idname = 'object.adh_display_wire_if_skinned' # Ugly name, sorry.
-    bl_label = 'Display Wire For Skinned Objects'
-    bl_options = {'REGISTER', 'UNDO'}
-
-    show_wire = bpy.props.BoolProperty(
-        name = 'Show Wire',
-        default = False,
-        description = 'Toggle show wire for all objects using selected armature'
-        )
-
-    @classmethod
-    def poll(self, context):
-        return context.active_object \
-            and context.active_object.type == 'ARMATURE'
-
-    def execute(self, context):
-        armature_obj = context.active_object
-        affected_objects = []
-        
-        for obj in context.selectable_objects:
-            armature_mod = [m for m in obj.modifiers if
-                            m.type == 'ARMATURE' and
-                            m.object == armature_obj]
-            if armature_mod:
-                affected_objects.append(obj)
-        
-        for obj in affected_objects:
-            obj.show_wire = self.show_wire
-
-        return {'FINISHED'}
-
 class ADH_RemoveVertexGroupsUnselectedBones(bpy.types.Operator):
     """Removes all vertex groups other than selected bones.
 
@@ -644,7 +611,6 @@ class ADH_RiggingToolsPanel(bpy.types.Panel):
 
         col = layout.column(align=1)
         col.operator('object.adh_create_hook_bones')
-        col.operator('object.adh_display_wire_if_skinned', text='Display Wire')
         col.operator('object.adh_remove_vertex_groups_unselected_bones', text='Remove Unselected VG')
 
         col = layout.column(align=1)
@@ -665,20 +631,11 @@ def register():
     bpy.utils.register_module(__name__)
 
     bpy.types.Scene.adh_rigging_tools = bpy.props.PointerProperty(type = ADH_RiggingToolsProps)
-    bpy.types.Scene.adh_regex_search_pattern = bpy.props.StringProperty(
-        name='',
-        description='Regular pattern to match against',
-        options={'SKIP_SAVE'})
-    bpy.types.Scene.adh_regex_replacement_string = bpy.props.StringProperty(
-        name='',
-        description='String to replace each match',
-        options={'SKIP_SAVE'})
-    
+
 def unregister():
     bpy.utils.unregister_module(__name__)
 
-    del bpy.types.Scene.adh_regex_search_pattern
-    del bpy.types.Scene.adh_regex_replacement_string
+    del bpy.types.Scene.adh_rigging_tools
 
 if __name__ == "__main__":
     register()

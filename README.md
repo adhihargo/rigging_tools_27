@@ -18,8 +18,6 @@ A collection of Blender operators for my personal rigging needs:
 
 - **Create Hook Bones**. Creates parentless bone for each selected bone, local copy-transformed. My primary tool to create a lattice-based deformation with intuitive control.
 
-- **Display Wire For Skinned Objects**. When the active object is an armature, this just displays wireframe for all mesh using the armature through an Armature modifier. I use it to aid joint placement, because it's a hassle to switch back-and-forth between mesh and armature just to show wireframe. I don't use this too often, though.
-
 - **Remove Vertex Groups of Unselected Bones**. In all selected mesh objects, this operator removes all vertex groups other than selected bones. Armature object must be active, in pose mode. I use it right after automatic weight assignment, to remove unwanted bone influence. This makes skinning much faster without sacrificing quality.
 
 - **Rename Regex**. Renames selected objects or bones using regular expressions. Depends on re, standard library module. It's still rough on the edges, but perfectly usable.
