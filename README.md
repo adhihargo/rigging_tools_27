@@ -16,6 +16,8 @@ A collection of Blender operators for my personal rigging needs:
 
 - **Select Custom Shape**. Select active bone's custom shape object, if any. If the shape's scene layers are turned off, one is turned on. If the shape is hidden, it's made visible.
 
+- **Create Bone Group**. Creates a new bone group, named after active bone and consisting of all selected bones. Color theme randomly selected among preset themes. If a bone group with the same name already exist, it only changes the existing bone group's color theme.
+
 - **Create Hook Bones**. Creates parentless bone for each selected bone, local copy-transformed. My primary tool to create a lattice-based deformation with intuitive control.
 
 - **Remove Vertex Groups of Unselected Bones**. In all selected mesh objects, this operator removes all vertex groups other than selected bones. Armature object must be active, in pose mode. I use it right after automatic weight assignment, to remove unwanted bone influence. This makes skinning much faster without sacrificing quality.

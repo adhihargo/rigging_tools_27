@@ -21,6 +21,7 @@
 import bpy
 import math
 import rigify
+import random
 import re
 from mathutils import Vector, Matrix
 
@@ -419,6 +420,37 @@ class ADH_SelectCustomShape(bpy.types.Operator):
 
         return {'FINISHED'}
 
+class ADH_CreateBoneGroup(bpy.types.Operator):
+    """Creates a new bone group named after active bone, consisting of all selected bones."""
+    bl_idname = 'object.adh_create_bone_group'
+    bl_label = 'Create Bone Group'
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @staticmethod
+    def random_theme():
+        themes = ['THEME01', 'THEME02', 'THEME03', 'THEME04', 'THEME05',
+                  'THEME06', 'THEME07', 'THEME08', 'THEME09', 'THEME10',
+                  'THEME11', 'THEME12', 'THEME13', 'THEME14', 'THEME15']
+        return random.choice(themes)
+
+    @classmethod
+    def poll(self, context):
+        return context.active_pose_bone != None
+
+    def execute(self, context):
+        pose = context.active_object.pose
+        bone_name = context.active_pose_bone.name
+
+        bone_groups = [bg for bg in pose.bone_groups if bg.name == bone_name]
+        if bone_groups != []:
+            pose.bone_groups.active = bone_groups[0]
+        else:
+            bpy.ops.pose.group_assign()
+            pose.bone_groups.active.name = bone_name
+        pose.bone_groups.active.color_set = self.random_theme()
+        
+        return {'FINISHED'}
+
 class ADH_CreateHookBones(bpy.types.Operator):
     """Creates parentless bone for each selected bone, local copy-transformed. Used for lattice deformation."""
     bl_idname = 'object.adh_create_hook_bones'
@@ -611,6 +643,7 @@ class ADH_RiggingToolsPanel(bpy.types.Panel):
 
         col = layout.column(align=1)
         col.operator('object.adh_create_hook_bones')
+        col.operator('object.adh_create_bone_group')
         col.operator('object.adh_remove_vertex_groups_unselected_bones', text='Remove Unselected VG')
 
         col = layout.column(align=1)
