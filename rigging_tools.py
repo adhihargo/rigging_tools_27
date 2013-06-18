@@ -23,6 +23,7 @@ import math
 import rigify
 import random
 import re
+from bpy.app.handlers import persistent
 from mathutils import Vector, Matrix
 
 bl_info = {
@@ -93,6 +94,13 @@ class ADH_ApplyLattices(bpy.types.Operator):
                 bpy.ops.object.modifier_apply(modifier=m.name)
 
         return {'FINISHED'}
+
+class ADH_MaskSelectedVertices(bpy.types.Operator):
+    """Using a Mask modifier, shows only selected vertices"""
+    bl_idname = 'object.adh_mask_to_selected_vertices'
+    bl_label = 'Apply Lattices'
+    bl_options = {'REGISTER', 'UNDO'}
+
 
 class ADH_CopyCustomShapes(bpy.types.Operator):
     """Copies custom shapes from one armature to another (on bones with similar name)."""
@@ -660,10 +668,26 @@ class ADH_RiggingToolsProps(bpy.types.PropertyGroup):
         description='String to replace each match',
         options={'SKIP_SAVE'})
 
+@persistent
+def turn_off_glsl_handler(dummy):
+    # A tweak for my old laptop. FIX when access through
+    # bpy.data.window_managers no longer crashes.
+    window = bpy.context.window
+    if window != None:
+        view_areas = [area for area in window.screen.areas
+                      if area.type == 'VIEW_3D']
+        for area in view_areas:
+            area.spaces.active.viewport_shade = 'SOLID'
+
+    scene = bpy.context.scene
+    if scene and scene.game_settings.material_mode == 'GLSL':
+        scene.game_settings.material_mode = 'MULTITEXTURE'
+
 def register():
     bpy.utils.register_module(__name__)
 
     bpy.types.Scene.adh_rigging_tools = bpy.props.PointerProperty(type = ADH_RiggingToolsProps)
+    bpy.app.handlers.load_post.append(turn_off_glsl_handler)
 
 def unregister():
     bpy.utils.unregister_module(__name__)
