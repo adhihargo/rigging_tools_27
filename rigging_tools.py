@@ -693,6 +693,7 @@ def unregister():
     bpy.utils.unregister_module(__name__)
 
     del bpy.types.Scene.adh_rigging_tools
+    bpy.app.handlers.load_post.remove(turn_off_glsl_handler)
 
 if __name__ == "__main__":
     register()
