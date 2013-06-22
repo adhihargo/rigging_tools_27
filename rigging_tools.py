@@ -104,7 +104,7 @@ class ADH_MaskSelectedVertices(bpy.types.Operator):
 
 class ADH_CopyCustomShapes(bpy.types.Operator):
     """Copies custom shapes from one armature to another (on bones with similar name)."""
-    bl_idname = 'object.adh_copy_shapes'
+    bl_idname = 'armature.adh_copy_shapes'
     bl_label = 'Copy Custom Shapes'
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -131,7 +131,7 @@ class ADH_CopyCustomShapes(bpy.types.Operator):
 
 class ADH_CreateCustomShape(bpy.types.Operator):
     """Creates mesh for custom shape for selected bones, at active bone's position, using its name as suffix."""
-    bl_idname = 'object.adh_create_shape'
+    bl_idname = 'armature.adh_create_shape'
     bl_label = 'Create Custom Shape'
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -404,7 +404,7 @@ class ADH_CreateCustomShape(bpy.types.Operator):
             
 class ADH_SelectCustomShape(bpy.types.Operator):
     """Selects custom shape object of active bone."""
-    bl_idname = 'object.adh_select_shape'
+    bl_idname = 'armature.adh_select_shape'
     bl_label = 'Select Custom Shape'
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -430,7 +430,7 @@ class ADH_SelectCustomShape(bpy.types.Operator):
 
 class ADH_CreateBoneGroup(bpy.types.Operator):
     """Creates a new bone group named after active bone, consisting of all selected bones."""
-    bl_idname = 'object.adh_create_bone_group'
+    bl_idname = 'armature.adh_create_bone_group'
     bl_label = 'Create Bone Group'
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -461,7 +461,7 @@ class ADH_CreateBoneGroup(bpy.types.Operator):
 
 class ADH_CreateHookBones(bpy.types.Operator):
     """Creates parentless bone for each selected bone, local copy-transformed. Used for lattice deformation."""
-    bl_idname = 'object.adh_create_hook_bones'
+    bl_idname = 'armature.adh_create_hook_bones'
     bl_label = 'Create Hook Bones'
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -506,7 +506,7 @@ class ADH_RemoveVertexGroupsUnselectedBones(bpy.types.Operator):
     """Removes all vertex groups other than selected bones.
 
     Used right after automatic weight assignment, to remove unwanted bone influence."""
-    bl_idname = 'object.adh_remove_vertex_groups_unselected_bones'
+    bl_idname = 'armature.adh_remove_vertex_groups_unselected_bones'
     bl_label = 'Remove Vertex Groups of Unselected Bones'
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -602,7 +602,7 @@ class ADH_SyncCustomShapePositionToBone(bpy.types.Operator):
 
 class ADH_UseSameCustomShape(bpy.types.Operator):
     """Copies active pose bone's custom shape to each selected pose bone."""
-    bl_idname = 'object.adh_use_same_shape'
+    bl_idname = 'armature.adh_use_same_shape'
     bl_label = 'Use Same Custom Shape'
     bl_options = {'REGISTER', 'UNDO'}
     
@@ -657,19 +657,19 @@ class ADH_RiggingToolsPanel(bpy.types.Panel):
                  **toggle_settings(props.show_custom_shape_tools))
         if props.show_custom_shape_tools:
             col = row.column(align=1)
-            col.operator('object.adh_copy_shapes')
-            col.operator('object.adh_use_same_shape')
-            col.operator('object.adh_create_shape')
-            col.operator('object.adh_select_shape')
+            col.operator('armature.adh_copy_shapes')
+            col.operator('armature.adh_use_same_shape')
+            col.operator('armature.adh_create_shape')
+            col.operator('armature.adh_select_shape')
 
         row = layout.row()
         row.prop(props, 'show_bone_tools',
                  **toggle_settings(props.show_bone_tools))
         if props.show_bone_tools:
             col = row.column(align=1)
-            col.operator('object.adh_create_hook_bones')
-            col.operator('object.adh_create_bone_group')
-            col.operator('object.adh_remove_vertex_groups_unselected_bones',
+            col.operator('armature.adh_create_hook_bones')
+            col.operator('armature.adh_create_bone_group')
+            col.operator('armature.adh_remove_vertex_groups_unselected_bones',
                          text='Remove Unselected VG')
 
         row = layout.row()
