@@ -7,6 +7,8 @@ A collection of Blender operators for my personal rigging needs:
 
 - **Apply Lattices**. Applies all lattice modifiers, and deletes all shapekeys. I use it for lattice-initialized shapekey creation, which for me is much faster and cleaner than plain editing and sculpting.
 
+- **Bind to Bone**. Binds all selected objects to selected bone, adding armature and vertex group if none exist yet. Compared to just parenting objects to the bone, this is faster while still lets us add component of the object that's controlled by another bone.
+
 - **Copy Custom Shapes**. Copies custom shape from one armature to another (on bones with similar name). Sometimes, without knowing the cause, all custom shapes in an armature already well-fit to a character just vanishes. Gone. And it's bloody annoying to reattach them one by one, thus this operator.
 
 - **Create Custom Shape**. Creates new custom shape object and automatically assigns it to all selected bones. Active bone's name will become the new object's base name. We can:

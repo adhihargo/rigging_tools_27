@@ -527,6 +527,36 @@ class ADH_RemoveVertexGroupsUnselectedBones(bpy.types.Operator):
 
         return {'FINISHED'}
 
+class ADH_BindToBone(bpy.types.Operator):
+    """Binds all selected objects to selected bone, adding armature and vertex group if none exist yet."""
+    bl_idname = 'armature.adh_bind_to_bone'
+    bl_label = 'Bind to Bone'
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(self, context):
+        return len(context.selected_objects) >= 2\
+            and context.active_pose_bone != None
+
+    def execute(self, context):
+        meshes = [obj for obj in context.selected_objects
+                  if obj.type == 'MESH']
+        armature = context.active_object
+        bone = context.active_pose_bone
+        for mesh in meshes:
+            armature_mods = [m for m in mesh.modifiers
+                             if m.type == 'ARMATURE' and m.object == armature]
+            print(armature_mods)
+            if not armature_mods:
+                am = mesh.modifiers.new('Armature', 'ARMATURE')
+                am.object = armature
+            vg = mesh.vertex_groups.get(bone.name)
+            if not vg:
+                vg = mesh.vertex_groups.new(bone.name)
+                vg.add(range(len(mesh.data.vertices)), 1.0, 'REPLACE')
+                
+        return {'FINISHED'}
+
 class ADH_RenameRegex(bpy.types.Operator):
     """Renames selected objects or bones using regular expressions. Depends on re, standard library module."""
     bl_idname = 'object.adh_rename_regex'
@@ -671,6 +701,7 @@ class ADH_RiggingToolsPanel(bpy.types.Panel):
             col.operator('armature.adh_create_bone_group')
             col.operator('armature.adh_remove_vertex_groups_unselected_bones',
                          text='Remove Unselected VG')
+            col.operator('armature.adh_bind_to_bone')
 
         row = layout.row()
         row.prop(props, 'show_sync_tools',
