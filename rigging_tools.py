@@ -475,7 +475,8 @@ class ADH_CreateHookBones(bpy.types.Operator):
 
     @classmethod
     def poll(self, context):
-        return context.active_object.type == 'ARMATURE'
+        return context.active_object != None\
+            and context.active_object.type == 'ARMATURE'
 
     def execute(self, context):
         prev_mode = 'EDIT' if context.mode == 'EDIT_ARMATURE' else context.mode
@@ -511,7 +512,8 @@ class ADH_RemoveVertexGroupsUnselectedBones(bpy.types.Operator):
 
     @classmethod
     def poll(self, context):
-        return context.selected_pose_bones != None
+        return context.active_object != None\
+            and context.selected_pose_bones != None
 
     def execute(self, context):
         bone_names = [b.name for b in context.selected_pose_bones]
@@ -536,8 +538,9 @@ class ADH_RenameRegex(bpy.types.Operator):
         return context.selected_objects != []
 
     def execute(self, context):
-        search_str = context.scene.adh_rigging_tools.regex_search_pattern
-        replacement_str = context.scene.adh_rigging_tools.regex_replacement_string
+        props = context.scene.adh_rigging_tools
+        search_str = props.regex_search_pattern
+        replacement_str = props.regex_replacement_string
         substring_re = re.compile(search_str)
         if context.mode == 'OBJECT':
             item_list = context.selected_objects
@@ -584,7 +587,8 @@ class ADH_SyncCustomShapePositionToBone(bpy.types.Operator):
 
     @classmethod
     def poll(self, context):
-        return context.active_object.type == 'ARMATURE'\
+        return context.active_object != None\
+            and context.active_object.type == 'ARMATURE'\
             and context.mode == 'POSE'
     
     def execute(self, context):
@@ -627,36 +631,54 @@ class ADH_RiggingToolsPanel(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
 
-    @classmethod
-    def poll(self, context):
-        return context.object is not None
-
     def draw(self, context):
         layout = self.layout
+        props = context.scene.adh_rigging_tools
 
         col = layout.column(align=1)
         col.operator('object.adh_rename_regex')
         col.prop(context.scene.adh_rigging_tools, 'regex_search_pattern')
         col.prop(context.scene.adh_rigging_tools, 'regex_replacement_string')
 
-        col = layout.column(align=1)
-        col.operator('object.adh_add_subsurf_modifier', text='Add Subsurf')
-        col.operator('object.adh_apply_lattices')
+        toggle_settings = lambda x:\
+            dict(icon_only=True, emboss=False, icon='RADIOBUT_ON', text='') if x else\
+            dict(icon_only=False, emboss=False, icon='RADIOBUT_OFF')
 
-        col = layout.column(align=1)
-        col.operator('object.adh_copy_shapes')
-        col.operator('object.adh_use_same_shape')
-        col.operator('object.adh_create_shape')
-        col.operator('object.adh_select_shape')
+        row = layout.row()
+        row.prop(props, 'show_modifier_tools',
+                 **toggle_settings(props.show_modifier_tools))
+        if props.show_modifier_tools:
+            col = row.column(align=1)
+            col.operator('object.adh_add_subsurf_modifier', text='Add Subsurf')
+            col.operator('object.adh_apply_lattices')
 
-        col = layout.column(align=1)
-        col.operator('object.adh_create_hook_bones')
-        col.operator('object.adh_create_bone_group')
-        col.operator('object.adh_remove_vertex_groups_unselected_bones', text='Remove Unselected VG')
+        row = layout.row()
+        row.prop(props, 'show_custom_shape_tools',
+                 **toggle_settings(props.show_custom_shape_tools))
+        if props.show_custom_shape_tools:
+            col = row.column(align=1)
+            col.operator('object.adh_copy_shapes')
+            col.operator('object.adh_use_same_shape')
+            col.operator('object.adh_create_shape')
+            col.operator('object.adh_select_shape')
 
-        col = layout.column(align=1)
-        col.operator('object.adh_sync_data_name_to_object', text='ObData.name <- Ob.name')
-        col.operator('object.adh_sync_shape_position_to_bone', text='CustShape.pos <- Bone.pos')
+        row = layout.row()
+        row.prop(props, 'show_bone_tools',
+                 **toggle_settings(props.show_bone_tools))
+        if props.show_bone_tools:
+            col = row.column(align=1)
+            col.operator('object.adh_create_hook_bones')
+            col.operator('object.adh_create_bone_group')
+            col.operator('object.adh_remove_vertex_groups_unselected_bones',
+                         text='Remove Unselected VG')
+
+        row = layout.row()
+        row.prop(props, 'show_sync_tools',
+                 **toggle_settings(props.show_sync_tools))
+        if props.show_sync_tools:
+            col = row.column(align=1)
+            col.operator('object.adh_sync_data_name_to_object', text='ObData.name <- Ob.name')
+            col.operator('object.adh_sync_shape_position_to_bone', text='CustShape.pos <- Bone.pos')
 
 class ADH_RiggingToolsProps(bpy.types.PropertyGroup):
     regex_search_pattern = bpy.props.StringProperty(
@@ -667,6 +689,18 @@ class ADH_RiggingToolsProps(bpy.types.PropertyGroup):
         name='',
         description='String to replace each match',
         options={'SKIP_SAVE'})
+    show_modifier_tools = bpy.props.BoolProperty(
+        name='Modifier',
+        description='Show modifier tools')
+    show_custom_shape_tools = bpy.props.BoolProperty(
+        name='Custom Shape',
+        description='Show custom shape tools')
+    show_bone_tools = bpy.props.BoolProperty(
+        name='Bone',
+        description='Show bone tools')
+    show_sync_tools = bpy.props.BoolProperty(
+        name='Sync',
+        description='Show sync tools')
 
 @persistent
 def turn_off_glsl_handler(dummy):
