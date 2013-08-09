@@ -40,7 +40,7 @@ bl_info = {
 
 class ADH_AddSubdivisionSurfaceModifier(bpy.types.Operator):
     """Add subdivision surface modifier to selected objects, if none given yet."""
-    bl_idname = 'object.adh_add_subsurf_modifier'
+    bl_idname = 'mesh.adh_add_subsurf_modifier'
     bl_label = 'Add Subdivision Surface Modifier'
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -73,7 +73,7 @@ class ADH_AddSubdivisionSurfaceModifier(bpy.types.Operator):
 
 class ADH_ApplyLattices(bpy.types.Operator):
     """Applies all lattice modifiers, deletes all shapekeys. Used for lattice-initialized shapekey creation."""
-    bl_idname = 'object.adh_apply_lattices'
+    bl_idname = 'mesh.adh_apply_lattices'
     bl_label = 'Apply Lattices'
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -97,10 +97,70 @@ class ADH_ApplyLattices(bpy.types.Operator):
 
 class ADH_MaskSelectedVertices(bpy.types.Operator):
     """Using a Mask modifier, shows only selected vertices"""
-    bl_idname = 'object.adh_mask_to_selected_vertices'
-    bl_label = 'Apply Lattices'
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_idname = 'mesh.adh_mask_selected_vertices'
+    bl_label = 'Mask Selected Vertices'
+    bl_options = {'REGISTER'}
 
+    action = bpy.props.EnumProperty(
+        name = 'Action',
+        items = [('add', 'Add', 'Add selected vertices to mask.'),
+                 ('remove', 'Remove', 'Remove selected vertices from mask.'),
+                 ('invert', 'Invert', 'Invert mask')],
+        default = 'add',
+        options = {'HIDDEN', 'SKIP_SAVE'})
+
+    MASK_NAME = 'Z_ADH_MASK'
+
+    @classmethod
+    def poll(self, context):
+        return context.active_object != None\
+            and context.active_object.type == 'MESH'
+
+    def invoke(self, context, event):
+        mesh = context.active_object
+
+        if event.shift: self.action = 'remove'
+        elif event.ctrl: self.action = 'invert'
+
+        orig_vg = mesh.vertex_groups.active
+        vg = mesh.vertex_groups.get(self.MASK_NAME)
+        if not vg:
+            vg = mesh.vertex_groups.new(self.MASK_NAME)
+        mesh.vertex_groups.active_index = vg.index
+
+        if self.action == 'invert':
+            bpy.ops.object.vertex_group_invert()
+            # if not mm or mm.type != 'MASK': return {'CANCELLED'}
+            # mm.invert_vertex_group = not mm.invert_vertex_group
+            # return {'FINISHED'}
+
+        mm = mesh.modifiers.get(self.MASK_NAME)
+
+        mesh.data.update()
+        selected_verts = [vert.index for vert in mesh.data.vertices
+                          if vert.select == True]
+
+        if not mm or mm.type != 'MASK':
+            mm = mesh.modifiers.new(self.MASK_NAME, 'MASK')
+            mm.show_render = False
+            mm.show_expanded = False
+            mm.vertex_group = self.MASK_NAME
+
+        if self.action == 'add':
+            if context.object.mode == 'EDIT':
+                bpy.ops.object.vertex_group_assign()
+            else:
+                vg.add(selected_verts, 1.0, 'REPLACE')
+        elif self.action == 'remove':
+            if context.object.mode == 'EDIT':
+                bpy.ops.object.vertex_group_remove_from()
+            else:
+                vg.remove(selected_verts)
+
+        if orig_vg:
+            mesh.vertex_groups.active_index = orig_vg.index
+
+        return {'FINISHED'}
 
 class ADH_CopyCustomShapes(bpy.types.Operator):
     """Copies custom shapes from one armature to another (on bones with similar name)."""
@@ -679,8 +739,9 @@ class ADH_RiggingToolsPanel(bpy.types.Panel):
                  **toggle_settings(props.show_modifier_tools))
         if props.show_modifier_tools:
             col = row.column(align=1)
-            col.operator('object.adh_add_subsurf_modifier', text='Add Subsurf')
-            col.operator('object.adh_apply_lattices')
+            col.operator('mesh.adh_add_subsurf_modifier', text='Add Subsurf')
+            col.operator('mesh.adh_apply_lattices')
+            col.operator('mesh.adh_mask_selected_vertices')
 
         row = layout.row()
         row.prop(props, 'show_custom_shape_tools',
