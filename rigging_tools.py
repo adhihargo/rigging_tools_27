@@ -243,7 +243,7 @@ class ADH_CreateCustomShape(bpy.types.Operator):
         name = 'Prefix',
         description = "Prefix for the new widget's name",
         default = 'wgt-',
-        options = {'SKIP_SAVE'})
+        )
 
     widget_layers = BoolVectorProperty(
         name = "Layers",
@@ -251,7 +251,7 @@ class ADH_CreateCustomShape(bpy.types.Operator):
         subtype = 'LAYER',
         size = 20,
         default = [x == 19 for x in range(0, 20)],
-        options = {'SKIP_SAVE'})
+        )
 
     @classmethod
     def poll(self, context):
@@ -275,24 +275,30 @@ class ADH_CreateCustomShape(bpy.types.Operator):
         col.label('Layers:')
         col.prop(self, 'widget_layers', text='')
 
-    def create_widget_from_object(self, rig, bone, scene, widget_src):
+    def create_widget_from_object(self, rig, bone, widget_src):
+        obj_name = self.widget_prefix + bone.name
+        scene = bpy.context.scene
+
         widget_data = bpy.data.meshes.new_from_object(scene, widget_src,
                                                       True, 'PREVIEW')
-        widget_obj = bpy.data.objects.new(self.widget_prefix + bone.name,
-                                          widget_data)
-        widget_obj.layers = self.widget_layers
-        widget_obj.draw_type = 'WIRE'
-
         matrix_src = widget_src.matrix_world
         matrix_bone = rig.matrix_world * bone.matrix
         matrix_wgt = matrix_bone.inverted() * matrix_src
         widget_data.transform(matrix_wgt)
 
-        scene.objects.link(widget_obj)
-        bone.custom_shape = widget_obj
-        rigify.utils.obj_to_bone(widget_obj, rig, bone.name)
+        if obj_name in scene.objects:
+            obj = scene.objects[obj_name]
+            obj.data = mesh
+        else:
+            obj = bpy.data.objects.new(obj_name, widget_data)
+            obj.layers = self.widget_layers
+            obj.draw_type = 'WIRE'
+            scene.objects.link(obj)
 
-        return widget_obj
+        bone.custom_shape = obj
+        rigify.utils.obj_to_bone(obj, rig, bone.name)
+
+        return obj
 
     def create_widget(self, rig, bone_name, bone_transform_name):
         """Creates an empty widget object for a bone, and returns the object. Taken with minor modification from Rigify.
@@ -300,12 +306,11 @@ class ADH_CreateCustomShape(bpy.types.Operator):
         obj_name = self.widget_prefix + bone_name
         scene = bpy.context.scene
         # Check if it already exists
+        mesh = bpy.data.meshes.new(obj_name)
         if obj_name in scene.objects:
-            mesh = bpy.data.meshes.new(obj_name)
             obj = scene.objects[obj_name]
             obj.data = mesh
         else:
-            mesh = bpy.data.meshes.new(obj_name)
             obj = bpy.data.objects.new(obj_name, mesh)
             scene.objects.link(obj)
 
@@ -486,8 +491,7 @@ class ADH_CreateCustomShape(bpy.types.Operator):
             
         func = getattr(self, "create_%s_widget" % self.widget_shape, None)
         if func == None and len(widget_srcs) == 1:
-            widget = self.create_widget_from_object(rig, bone, scene,
-                                                    widget_srcs[0])
+            widget = self.create_widget_from_object(rig, bone, widget_srcs[0])
         else:
             widget = func(rig, bone.name,
                           self.widget_size, self.widget_pos, self.widget_rot)
