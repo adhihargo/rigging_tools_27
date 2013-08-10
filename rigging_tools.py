@@ -242,7 +242,7 @@ class ADH_CreateCustomShape(bpy.types.Operator):
     widget_prefix = StringProperty(
         name = 'Prefix',
         description = "Prefix for the new widget's name",
-        default = 'wgt-'
+        default = 'wgt-',
         options = {'SKIP_SAVE'})
 
     widget_layers = BoolVectorProperty(
