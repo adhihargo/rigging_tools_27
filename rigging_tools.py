@@ -24,6 +24,8 @@ import rigify
 import random
 import re
 from bpy.app.handlers import persistent
+from bpy.props import BoolProperty, BoolVectorProperty, EnumProperty,\
+    FloatProperty, StringProperty, PointerProperty
 from mathutils import Vector, Matrix
 
 bl_info = {
@@ -44,7 +46,7 @@ class ADH_AddSubdivisionSurfaceModifier(bpy.types.Operator):
     bl_label = 'Add Subdivision Surface Modifier'
     bl_options = {'REGISTER', 'UNDO'}
 
-    show_viewport = bpy.props.BoolProperty(
+    show_viewport = BoolProperty(
         name = 'Show in Viewport',
         default = False,
         description = "Show Subdivision Surface modifier's effect in viewport"
@@ -101,7 +103,7 @@ class ADH_MaskSelectedVertices(bpy.types.Operator):
     bl_label = 'Mask Selected Vertices'
     bl_options = {'REGISTER'}
 
-    action = bpy.props.EnumProperty(
+    action = EnumProperty(
         name = 'Action',
         items = [('add', 'Add', 'Add selected vertices to mask.'),
                  ('remove', 'Remove', 'Remove selected vertices from mask.'),
@@ -195,7 +197,7 @@ class ADH_CreateCustomShape(bpy.types.Operator):
     bl_label = 'Create Custom Shape'
     bl_options = {'REGISTER', 'UNDO'}
 
-    widget_shape = bpy.props.EnumProperty(
+    widget_shape = EnumProperty(
         name = 'Shape',
         items = [('sphere', 'Sphere', '8x4 edges'),
                  ('ring', 'Ring', '24 vertices'),
@@ -204,9 +206,10 @@ class ADH_CreateCustomShape(bpy.types.Operator):
                  ('bidirection', 'Bidirection', ''),
                  ('box', 'Box', ''),
                  ('fourways', 'Four-Ways', 'Circle with arrows to four directions - 40 vertices'),
-                 ('fourgaps', 'Four-Gaps', 'Broken circle that complements Four-Ways - 20 vertices')])
+                 ('fourgaps', 'Four-Gaps', 'Broken circle that complements Four-Ways - 20 vertices'),
+                 ('selected', 'Selected', 'Shape of selected object')])
 
-    widget_size = bpy.props.FloatProperty(
+    widget_size = FloatProperty(
         name = 'Size',
         default = 1.0,
         min = 0,
@@ -215,7 +218,7 @@ class ADH_CreateCustomShape(bpy.types.Operator):
         description = "Widget's scale as relative to bone.",
         )
 
-    widget_pos = bpy.props.FloatProperty(
+    widget_pos = FloatProperty(
         name = 'Position',
         default = 0.5,
         min = -.5,
@@ -225,7 +228,7 @@ class ADH_CreateCustomShape(bpy.types.Operator):
         description = "Widget's position along bone's length. 0.0 = base, 1.0 = tip.",
         )
 
-    widget_rot = bpy.props.FloatProperty(
+    widget_rot = FloatProperty(
         name = 'Rotation',
         default = 0,
         min = -90,
@@ -235,18 +238,22 @@ class ADH_CreateCustomShape(bpy.types.Operator):
         description = "Widget's rotation along bone's X axis.",
         )
 
-    widget_prefix = bpy.props.StringProperty(
+    widget_prefix = StringProperty(
         name = 'Prefix',
         description = "Prefix for the new widget's name",
         default = 'wgt-'
         )
 
-    widget_layers = bpy.props.BoolVectorProperty(
+    widget_layers = BoolVectorProperty(
         name = "Layers",
         description = "Object layers where new widgets will be placed",
         subtype = 'LAYER',
         size = 20,
         default = [x == 19 for x in range(0, 20)]
+        )
+
+    from_selected = BoolProperty(
+        options = {'HIDDEN'}
         )
 
     @classmethod
@@ -270,6 +277,25 @@ class ADH_CreateCustomShape(bpy.types.Operator):
         col.prop(self, 'widget_prefix', text='')
         col.label('Layers:')
         col.prop(self, 'widget_layers', text='')
+
+    def create_widget_from_object(self, rig, bone, scene, widget_src):
+        widget_data = bpy.data.meshes.new_from_object(scene, widget_src,
+                                                      True, 'PREVIEW')
+        widget_obj = bpy.data.objects.new(self.widget_prefix + bone.name,
+                                          widget_data)
+        widget_obj.layers = self.widget_layers
+        widget_obj.draw_type = 'WIRE'
+
+        matrix_src = widget_src.matrix_world
+        matrix_bone = rig.matrix_world * bone.matrix
+        matrix_wgt = matrix_bone.inverted() * matrix_src
+        widget_data.transform(matrix_wgt)
+
+        scene.objects.link(widget_obj)
+        bone.custom_shape = widget_obj
+        rigify.utils.obj_to_bone(widget_obj, rig, bone.name)
+
+        return widget_obj
 
     def create_widget(self, rig, bone_name, bone_transform_name):
         """Creates an empty widget object for a bone, and returns the object. Taken with minor modification from Rigify.
@@ -455,13 +481,28 @@ class ADH_CreateCustomShape(bpy.types.Operator):
     def execute(self, context):
         rig = context.active_object
         bone = context.active_pose_bone
-        func = getattr(self, "create_%s_widget" % self.widget_shape)
-        widget = func(rig, bone.name, self.widget_size, self.widget_pos, self.widget_rot)
+        scene = context.scene
+
+        widget = None
+        widget_srcs = [obj for obj in context.selected_objects
+                       if obj.type == 'MESH']
+            
+        func = getattr(self, "create_%s_widget" % self.widget_shape, None)
+        if func == None and len(widget_srcs) == 1:
+            widget = self.create_widget_from_object(rig, bone, scene,
+                                                    widget_srcs[0])
+        else:
+            widget = func(rig, bone.name,
+                          self.widget_size, self.widget_pos, self.widget_rot)
+
         for bone in context.selected_pose_bones:
             bone.custom_shape = widget
 
         return {'FINISHED'}
             
+    def invoke(self, context, event):
+        return self.execute(context)
+
 class ADH_SelectCustomShape(bpy.types.Operator):
     """Selects custom shape object of active bone."""
     bl_idname = 'armature.adh_select_shape'
@@ -525,7 +566,7 @@ class ADH_CreateHookBones(bpy.types.Operator):
     bl_label = 'Create Hook Bones'
     bl_options = {'REGISTER', 'UNDO'}
 
-    hook_layers = bpy.props.BoolVectorProperty(
+    hook_layers = BoolVectorProperty(
         name = "Hook Layers",
         description = "Armature layers where new hooks will be placed",
         subtype = 'LAYER',
@@ -773,24 +814,24 @@ class ADH_RiggingToolsPanel(bpy.types.Panel):
             col.operator('object.adh_sync_shape_position_to_bone', text='CustShape.pos <- Bone.pos')
 
 class ADH_RiggingToolsProps(bpy.types.PropertyGroup):
-    regex_search_pattern = bpy.props.StringProperty(
+    regex_search_pattern = StringProperty(
         name='',
         description='Regular pattern to match against',
         options={'SKIP_SAVE'})
-    regex_replacement_string = bpy.props.StringProperty(
+    regex_replacement_string = StringProperty(
         name='',
         description='String to replace each match',
         options={'SKIP_SAVE'})
-    show_modifier_tools = bpy.props.BoolProperty(
+    show_modifier_tools = BoolProperty(
         name='Modifier',
         description='Show modifier tools')
-    show_custom_shape_tools = bpy.props.BoolProperty(
+    show_custom_shape_tools = BoolProperty(
         name='Custom Shape',
         description='Show custom shape tools')
-    show_bone_tools = bpy.props.BoolProperty(
+    show_bone_tools = BoolProperty(
         name='Bone',
         description='Show bone tools')
-    show_sync_tools = bpy.props.BoolProperty(
+    show_sync_tools = BoolProperty(
         name='Sync',
         description='Show sync tools')
 
@@ -812,7 +853,7 @@ def turn_off_glsl_handler(dummy):
 def register():
     bpy.utils.register_module(__name__)
 
-    bpy.types.Scene.adh_rigging_tools = bpy.props.PointerProperty(type = ADH_RiggingToolsProps)
+    bpy.types.Scene.adh_rigging_tools = PointerProperty(type = ADH_RiggingToolsProps)
     bpy.app.handlers.load_post.append(turn_off_glsl_handler)
 
 def unregister():
