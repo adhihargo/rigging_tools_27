@@ -207,7 +207,8 @@ class ADH_CreateCustomShape(bpy.types.Operator):
                  ('box', 'Box', ''),
                  ('fourways', 'Four-Ways', 'Circle with arrows to four directions - 40 vertices'),
                  ('fourgaps', 'Four-Gaps', 'Broken circle that complements Four-Ways - 20 vertices'),
-                 ('selected', 'Selected', 'Shape of selected object')])
+                 ('selected', 'Selected', 'Shape of selected object')],
+        options = {'SKIP_SAVE'})
 
     widget_size = FloatProperty(
         name = 'Size',
@@ -216,7 +217,7 @@ class ADH_CreateCustomShape(bpy.types.Operator):
         max = 2,
         step = 10,
         description = "Widget's scale as relative to bone.",
-        )
+        options = {'SKIP_SAVE'})
 
     widget_pos = FloatProperty(
         name = 'Position',
@@ -226,7 +227,7 @@ class ADH_CreateCustomShape(bpy.types.Operator):
         step = 5,
         precision = 1,
         description = "Widget's position along bone's length. 0.0 = base, 1.0 = tip.",
-        )
+        options = {'SKIP_SAVE'})
 
     widget_rot = FloatProperty(
         name = 'Rotation',
@@ -236,25 +237,21 @@ class ADH_CreateCustomShape(bpy.types.Operator):
         step = 10,
         precision = 1,
         description = "Widget's rotation along bone's X axis.",
-        )
+        options = {'SKIP_SAVE'})
 
     widget_prefix = StringProperty(
         name = 'Prefix',
         description = "Prefix for the new widget's name",
         default = 'wgt-'
-        )
+        options = {'SKIP_SAVE'})
 
     widget_layers = BoolVectorProperty(
         name = "Layers",
         description = "Object layers where new widgets will be placed",
         subtype = 'LAYER',
         size = 20,
-        default = [x == 19 for x in range(0, 20)]
-        )
-
-    from_selected = BoolProperty(
-        options = {'HIDDEN'}
-        )
+        default = [x == 19 for x in range(0, 20)],
+        options = {'SKIP_SAVE'})
 
     @classmethod
     def poll(self, context):
