@@ -24,6 +24,11 @@ A collection of Blender operators for my personal rigging needs:
 
 - **Create Hook Bones**. Creates parentless bone for each selected bone, local copy-transformed. My primary tool to create a lattice-based deformation with intuitive control.
 
+- **Create Spokes**. I use this to setup things like wing feathers and flexible cartoony eyelid. Basically this tool has two different behaviors that share the same basic operations:
+  - If a mesh object is active in Edit mode and there's an armature also selected, create bones emanating from 3D cursor and ending at each selected vertices. Optionally create one parent for *all* newly created bones, and one damped-track tip for each.
+  - If an armature is active in Edit or Pose mode, optionally create one parent and one damped-track tip for each selected bones.
+  NOTE: Damped Track constrain creation won't be cancelled by Undo operation when in armature Edit mode, so must be removed manually.
+
 - **Remove Vertex Groups of Unselected Bones**. In all selected mesh objects, this operator removes all vertex groups other than selected bones. Armature object must be active, in pose mode. I use it right after automatic weight assignment, to remove unwanted bone influence. This makes skinning much faster without sacrificing quality.
 
 - **Rename Regex**. Renames selected objects or bones using regular expressions. Depends on re, standard library module. It's still rough on the edges, but perfectly usable.
