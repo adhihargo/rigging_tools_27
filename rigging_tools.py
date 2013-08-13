@@ -658,10 +658,11 @@ class ADH_CreateSpokes(bpy.types.Operator):
             parent_bone = armature.data.edit_bones.new(PRF_ROOT + bone.name)
             parent_bone.tail = bone.head + Vector([0, 0, -.05])
             parent_bone.head = bone.head
-            parent_bone.bbone_x = BBONE_BASE_SIZE * 2
-            parent_bone.bbone_z = BBONE_BASE_SIZE * 2
+            parent_bone.bbone_x = bone.bbone_x * 2
+            parent_bone.bbone_z = bone.bbone_x * 2
             parent_bone.layers = self.aux_layers
             parent_bone.align_orientation(bone)
+            parent_bone.use_deform = False
 
             delta = parent_bone.head - parent_bone.tail
             parent_bone.head += delta
@@ -677,10 +678,11 @@ class ADH_CreateSpokes(bpy.types.Operator):
         tip_bone = armature.data.edit_bones.new(PRF_TIP + bone.name)
         tip_bone.head = bone.tail
         tip_bone.tail = bone.tail + Vector([.05, 0, 0])
-        tip_bone.bbone_x = BBONE_BASE_SIZE * 2
-        tip_bone.bbone_z = BBONE_BASE_SIZE * 2
+        tip_bone.bbone_x = bone.bbone_x * 2
+        tip_bone.bbone_z = bone.bbone_z * 2
         tip_bone.align_orientation(bone)
         tip_bone.layers = self.aux_layers
+        tip_bone.use_deform = False
 
     def setup_bone_constraint(self, armature, bone_name):
         if not self.tip:
