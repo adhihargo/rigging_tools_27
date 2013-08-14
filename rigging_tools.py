@@ -63,8 +63,7 @@ class ADH_AddSubdivisionSurfaceModifier(bpy.types.Operator):
             and context.selected_objects != []
 
     def execute(self, context):
-        meshes = [obj for obj in context.selected_objects
-                  if obj.type == 'MESH']
+        meshes = [obj for obj in context.selected_objects if obj.type == 'MESH']
         for obj in meshes:
             sml = [m for m in obj.modifiers if m.type == 'SUBSURF']
             if sml == []:
@@ -566,10 +565,10 @@ class ADH_CreateBoneGroup(bpy.types.Operator):
         
         return {'FINISHED'}
 
-class ADH_CreateHookBones(bpy.types.Operator):
-    """Creates parentless bone for each selected bone, local copy-transformed. Used for lattice deformation."""
-    bl_idname = 'armature.adh_create_hook_bones'
-    bl_label = 'Create Hook Bones'
+class ADH_CreateHooks(bpy.types.Operator):
+    """Creates parentless bone for each selected bones (local copy-transformed) or lattice points."""
+    bl_idname = 'armature.adh_create_hooks'
+    bl_label = 'Create Hooks'
     bl_options = {'REGISTER', 'UNDO'}
 
     hook_layers = BoolVectorProperty(
@@ -580,34 +579,114 @@ class ADH_CreateHookBones(bpy.types.Operator):
         default = [x == 30 for x in range(0, 32)]
         )
 
-    @classmethod
-    def poll(self, context):
-        return context.active_object != None\
-            and context.active_object.type == 'ARMATURE'
+    invoked = False
 
-    def execute(self, context):
-        prev_mode = 'EDIT' if context.mode == 'EDIT_ARMATURE' else context.mode
+    def setup_copy_constraint(self, armature, bone_name):
+        hook = armature.pose.bones[PRF_HOOK + bone_name]
+        ct_constraint = hook.constraints.new('COPY_TRANSFORMS')
+        ct_constraint.owner_space = 'LOCAL'
+        ct_constraint.target_space = 'LOCAL'
+        ct_constraint.target = armature
+        ct_constraint.subtarget = bone_name
+
+    def hook_on_lattice(self, context, lattice, armature):
+        objects = context.scene.objects
+
+        prev_lattice_mode = lattice.mode
+        bpy.ops.object.mode_set(mode='OBJECT') # Needed for matrix calculation
+
+        armature_mat_inv = armature.matrix_world.inverted()
+        lattice_mat = lattice.matrix_world
+        selected_points = [point for point in lattice.data.points
+                           if point.select]
+
+        objects.active = armature
+        prev_mode = armature.mode
+        bpy.ops.object.mode_set(mode='EDIT')
+        for index, point in enumerate(selected_points):
+            point_co = armature_mat_inv * (lattice_mat * point.co)
+            bone_name = "%s%s.%03d" % (PRF_HOOK, lattice.name, index)
+            bone = armature.data.edit_bones.new(bone_name)
+            bone.head = point_co
+            bone.tail = point_co + Vector([0, 0, BBONE_BASE_SIZE * 5])
+            bone.bbone_x = BBONE_BASE_SIZE
+            bone.bbone_z = BBONE_BASE_SIZE
+            bone.layers = self.hook_layers
+            bone.use_deform = False
+        armature.data.layers = list(
+            map(any, zip(armature.data.layers, self.hook_layers)))
+        bpy.ops.object.mode_set(mode=prev_mode)
+
+        objects.active = lattice
+        bpy.ops.object.mode_set(mode='EDIT')
+        selected_points = [point for point in lattice.data.points
+                           if point.select] # previous one lost after toggling
+        for point in selected_points:
+            point.select = False
+        for index, point in enumerate(selected_points):
+            bone_name = "%s%s.%03d" % (PRF_HOOK, lattice.name, index)
+            mod = lattice.modifiers.new(bone_name, 'HOOK')
+            mod.object = armature
+            mod.subtarget = bone_name
+            point.select=True
+            bpy.ops.object.hook_assign(modifier=bone_name)
+            bpy.ops.object.hook_reset(modifier=bone_name)
+            point.select=False
+        for point in selected_points:
+            point.select = True
+        bpy.ops.object.mode_set(mode=prev_lattice_mode)
+
+        return {'FINISHED'}
+
+    def hook_on_bone(self, context, armature):
+        prev_mode = armature.mode
         bpy.ops.object.mode_set(mode='EDIT')
         for bone in context.selected_bones:
             hook_name = PRF_HOOK + bone.name
-            hook = context.active_object.data.edit_bones.new(hook_name)
+            hook = armature.data.edit_bones.new(hook_name)
             hook.head = bone.head
             hook.tail = bone.tail
             hook.bbone_x = bone.bbone_x / 2
             hook.bbone_z = bone.bbone_z / 2
             hook.layers = self.hook_layers
+            hook.use_deform = False
             hook.roll = bone.roll
         bpy.ops.object.mode_set(mode='POSE')
         for bone in context.selected_pose_bones:
-            hook = context.active_object.pose.bones['hook-' + bone.name]
-            ct_constraint = hook.constraints.new('COPY_TRANSFORMS')
-            ct_constraint.owner_space = 'LOCAL'
-            ct_constraint.target_space = 'LOCAL'
-            ct_constraint.target = context.active_object
-            ct_constraint.subtarget = bone.name
+            self.setup_copy_constraint(armature, bone.name)
         bpy.ops.object.mode_set(mode=prev_mode)
 
         return {'FINISHED'}
+
+    @classmethod
+    def poll(self, context):
+        return context.active_object != None\
+            and context.active_object.type in ['ARMATURE', 'LATTICE']
+
+    def draw(self, context):
+        layout = self.layout
+
+        if self.invoked:
+            return
+
+        row = layout.row(align=True)
+        row.prop(self, "hook_layers")
+
+    def execute(self, context):
+        obj1 = context.active_object
+        if obj1.type == 'LATTICE':
+            selected = [obj for obj in context.selected_objects if obj != obj1]
+            if not selected:
+                return {'CANCELLED'}
+            obj2 = selected[0]
+            return self.hook_on_lattice(context, obj1, obj2)
+        else:
+            return self.hook_on_bone(context, obj1)
+
+    def invoke(self, context, event):
+        retval = context.window_manager.invoke_props_dialog(self)
+        self.invoked = True
+        return retval
 
 class ADH_CreateSpokes(bpy.types.Operator):
     """Creates parentless bones in selected armature from the 3D cursor, ending at each selected vertices of active mesh object."""
@@ -707,7 +786,7 @@ class ADH_CreateSpokes(bpy.types.Operator):
 
     def set_armature_layers(self, armature):
         combined_layers = list(
-            map(lambda x: any(x),
+            map(any,
                 zip(armature.data.layers, self.spoke_layers, self.aux_layers)
                 if (self.parent or self.tip) else
                 zip(armature.data.layers, self.spoke_layers)))
@@ -729,7 +808,7 @@ class ADH_CreateSpokes(bpy.types.Operator):
 
         bpy.ops.object.editmode_toggle()
         scene.objects.active = armature
-        prev_mode = 'EDIT' if context.mode == 'EDIT_ARMATURE' else context.mode
+        prev_mode = armature.mode
 
         bpy.ops.object.mode_set(mode='EDIT')
         for bone in context.selected_editable_bones:
@@ -755,7 +834,7 @@ class ADH_CreateSpokes(bpy.types.Operator):
         return {'FINISHED'}
 
     def create_spoke_tips(self, context, armature):
-        prev_mode = 'EDIT' if context.mode == 'EDIT_ARMATURE' else context.mode
+        prev_mode = armature.mode
 
         bpy.ops.object.mode_set(mode='EDIT')
         for bone in context.selected_bones:
@@ -799,8 +878,7 @@ class ADH_CreateSpokes(bpy.types.Operator):
 
     def execute(self, context):
         obj1 = context.active_object
-        selected = [obj for obj in context.selected_objects
-                    if obj != obj1]
+        selected = [obj for obj in context.selected_objects if obj != obj1]
         obj2 = selected[0] if selected else None
 
         if obj1.type == 'MESH' and obj1.mode == 'EDIT'\
@@ -853,8 +931,7 @@ class ADH_BindToBone(bpy.types.Operator):
             and context.active_pose_bone != None
 
     def execute(self, context):
-        meshes = [obj for obj in context.selected_objects
-                  if obj.type == 'MESH']
+        meshes = [obj for obj in context.selected_objects if obj.type == 'MESH']
         armature = context.active_object
         bone = context.active_pose_bone
         for mesh in meshes:
@@ -1012,7 +1089,7 @@ class ADH_RiggingToolsPanel(bpy.types.Panel):
                  **toggle_settings(props.show_bone_tools))
         if props.show_bone_tools:
             col = row.column(align=1)
-            col.operator('armature.adh_create_hook_bones')
+            col.operator('armature.adh_create_hooks')
             col.operator('armature.adh_create_spokes')
             col.operator('armature.adh_create_bone_group')
             col.operator('armature.adh_remove_vertex_groups_unselected_bones',

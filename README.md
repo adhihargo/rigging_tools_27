@@ -22,9 +22,11 @@ A collection of Blender operators for my personal rigging needs:
 
 - **Create Bone Group**. Creates a new bone group, named after active bone and consisting of all selected bones. Color theme randomly selected among preset themes. If a bone group with the same name already exist, it only changes the existing bone group's color theme.
 
-- **Create Hook Bones**. Creates parentless bone for each selected bone, local copy-transformed. My primary tool to create a lattice-based deformation with intuitive control.
+- **Create Hooks**. This tool has two different behaviors:
+  - If an armature object is active, create parentless bone for each selected bone and bind both with Copy Transform constraint (local-to-local coordinate mapping).
+  - If a lattice object is active and there's an armature also selected, create bones at each selected lattice point's coordinate and bind it to the point with Hook modifier.
 
-- **Create Spokes**. I use this to setup things like wing feathers and flexible cartoony eyelid. Basically this tool has two different behaviors that share the same basic operations:
+- **Create Spokes**. I use this to setup things like wing feathers and flexible cartoony eyelid. This tool has two different behaviors:
   - If a mesh object is active in Edit mode and there's an armature also selected, create bones emanating from 3D cursor and ending at each selected vertices. Optionally create one parent for *all* newly created bones, and one damped-track tip for each.
   - If an armature is active in Edit or Pose mode, optionally create one parent and one damped-track tip for each selected bones.
   NOTE: Damped Track constrain creation won't be cancelled by Undo operation when in armature Edit mode, so must be removed manually.
