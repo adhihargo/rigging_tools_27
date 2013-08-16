@@ -45,6 +45,41 @@ PRF_TIP = "tip-"
 PRF_HOOK = "hook-"
 BBONE_BASE_SIZE = 0.01
 
+class ADH_RenameRegex(bpy.types.Operator):
+    """Renames selected objects or bones using regular expressions. Depends on re, standard library module."""
+    bl_idname = 'object.adh_rename_regex'
+    bl_label = 'Rename Regex'
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(self, context):
+        return context.selected_objects != []
+
+    def execute(self, context):
+        props = context.scene.adh_rigging_tools
+        search_str = props.regex_search_pattern
+        replacement_str = props.regex_replacement_string
+        substring_re = re.compile(search_str)
+        if context.mode == 'OBJECT':
+            item_list = context.selected_objects
+        elif context.mode == 'POSE':
+            item_list = context.selected_pose_bones
+        elif context.mode == 'EDIT_ARMATURE':
+            item_list = context.selected_bones
+        else:
+            return {'CANCELLED'}
+
+        for item in item_list:
+            item.name = substring_re.sub(replacement_str, item.name)
+
+        # In pose mode, operator's result won't show immediately. This
+        # solves it somehow: only the View3D area will refresh
+        # promptly.
+        if context.mode == 'POSE':
+            context.area.tag_redraw()
+
+        return {'FINISHED'}
+
 class ADH_AddSubdivisionSurfaceModifier(bpy.types.Operator):
     """Add subdivision surface modifier to selected objects, if none given yet."""
     bl_idname = 'mesh.adh_add_subsurf_modifier'
@@ -192,6 +227,31 @@ class ADH_CopyCustomShapes(bpy.types.Operator):
                         bone.custom_shape
                 except:
                     pass
+
+        return {'FINISHED'}
+
+class ADH_UseSameCustomShape(bpy.types.Operator):
+    """Copies active pose bone's custom shape to each selected pose bone."""
+    bl_idname = 'armature.adh_use_same_shape'
+    bl_label = 'Use Same Custom Shape'
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    @classmethod
+    def poll(self, context):
+        return context.active_pose_bone != None
+
+    def execute(self, context):
+        if context.active_pose_bone == None:
+            return {'CANCELLED'}
+
+        custom_shape = context.active_pose_bone.custom_shape
+        for obj in context.selected_objects:
+            if obj.type == 'MESH':
+                custom_shape = obj
+                break
+
+        for bone in context.selected_pose_bones:
+            bone.custom_shape = custom_shape
 
         return {'FINISHED'}
 
@@ -534,37 +594,6 @@ class ADH_SelectCustomShape(bpy.types.Operator):
 
         return {'FINISHED'}
 
-class ADH_CreateBoneGroup(bpy.types.Operator):
-    """Creates a new bone group named after active bone, consisting of all selected bones."""
-    bl_idname = 'armature.adh_create_bone_group'
-    bl_label = 'Create Bone Group'
-    bl_options = {'REGISTER', 'UNDO'}
-
-    @staticmethod
-    def random_theme():
-        themes = ['THEME01', 'THEME02', 'THEME03', 'THEME04', 'THEME05',
-                  'THEME06', 'THEME07', 'THEME08', 'THEME09', 'THEME10',
-                  'THEME11', 'THEME12', 'THEME13', 'THEME14', 'THEME15']
-        return random.choice(themes)
-
-    @classmethod
-    def poll(self, context):
-        return context.active_pose_bone != None
-
-    def execute(self, context):
-        pose = context.active_object.pose
-        bone_name = context.active_pose_bone.name
-
-        bone_groups = [bg for bg in pose.bone_groups if bg.name == bone_name]
-        if bone_groups != []:
-            pose.bone_groups.active = bone_groups[0]
-        else:
-            bpy.ops.pose.group_assign()
-            pose.bone_groups.active.name = bone_name
-        pose.bone_groups.active.color_set = self.random_theme()
-        
-        return {'FINISHED'}
-
 class ADH_CreateHooks(bpy.types.Operator):
     """Creates parentless bone for each selected bones (local copy-transformed) or lattice points."""
     bl_idname = 'armature.adh_create_hooks'
@@ -894,6 +923,37 @@ class ADH_CreateSpokes(bpy.types.Operator):
         self.invoked = True
         return retval
 
+class ADH_CreateBoneGroup(bpy.types.Operator):
+    """Creates a new bone group named after active bone, consisting of all selected bones."""
+    bl_idname = 'armature.adh_create_bone_group'
+    bl_label = 'Create Bone Group'
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @staticmethod
+    def random_theme():
+        themes = ['THEME01', 'THEME02', 'THEME03', 'THEME04', 'THEME05',
+                  'THEME06', 'THEME07', 'THEME08', 'THEME09', 'THEME10',
+                  'THEME11', 'THEME12', 'THEME13', 'THEME14', 'THEME15']
+        return random.choice(themes)
+
+    @classmethod
+    def poll(self, context):
+        return context.active_pose_bone != None
+
+    def execute(self, context):
+        pose = context.active_object.pose
+        bone_name = context.active_pose_bone.name
+
+        bone_groups = [bg for bg in pose.bone_groups if bg.name == bone_name]
+        if bone_groups != []:
+            pose.bone_groups.active = bone_groups[0]
+        else:
+            bpy.ops.pose.group_assign()
+            pose.bone_groups.active.name = bone_name
+        pose.bone_groups.active.color_set = self.random_theme()
+        
+        return {'FINISHED'}
+
 class ADH_RemoveVertexGroupsUnselectedBones(bpy.types.Operator):
     """Removes all vertex groups other than selected bones.
 
@@ -948,41 +1008,6 @@ class ADH_BindToBone(bpy.types.Operator):
                 
         return {'FINISHED'}
 
-class ADH_RenameRegex(bpy.types.Operator):
-    """Renames selected objects or bones using regular expressions. Depends on re, standard library module."""
-    bl_idname = 'object.adh_rename_regex'
-    bl_label = 'Rename Regex'
-    bl_options = {'REGISTER', 'UNDO'}
-
-    @classmethod
-    def poll(self, context):
-        return context.selected_objects != []
-
-    def execute(self, context):
-        props = context.scene.adh_rigging_tools
-        search_str = props.regex_search_pattern
-        replacement_str = props.regex_replacement_string
-        substring_re = re.compile(search_str)
-        if context.mode == 'OBJECT':
-            item_list = context.selected_objects
-        elif context.mode == 'POSE':
-            item_list = context.selected_pose_bones
-        elif context.mode == 'EDIT_ARMATURE':
-            item_list = context.selected_bones
-        else:
-            return {'CANCELLED'}
-
-        for item in item_list:
-            item.name = substring_re.sub(replacement_str, item.name)
-
-        # In pose mode, operator's result won't show immediately. This
-        # solves it somehow: only the View3D area will refresh
-        # promptly.
-        if context.mode == 'POSE':
-            context.area.tag_redraw()
-
-        return {'FINISHED'}
-
 class ADH_SyncObjectDataNameToObject(bpy.types.Operator):
     """Sync an object data's name to the object's. Made it easier to reuse object data among separate files."""
     bl_idname = 'object.adh_sync_data_name_to_object'
@@ -1018,31 +1043,6 @@ class ADH_SyncCustomShapePositionToBone(bpy.types.Operator):
             if obj:
                 rigify.utils.obj_to_bone(obj, context.active_object,
                                          bone.name)
-
-        return {'FINISHED'}
-
-class ADH_UseSameCustomShape(bpy.types.Operator):
-    """Copies active pose bone's custom shape to each selected pose bone."""
-    bl_idname = 'armature.adh_use_same_shape'
-    bl_label = 'Use Same Custom Shape'
-    bl_options = {'REGISTER', 'UNDO'}
-    
-    @classmethod
-    def poll(self, context):
-        return context.active_pose_bone != None
-
-    def execute(self, context):
-        if context.active_pose_bone == None:
-            return {'CANCELLED'}
-
-        custom_shape = context.active_pose_bone.custom_shape
-        for obj in context.selected_objects:
-            if obj.type == 'MESH':
-                custom_shape = obj
-                break
-
-        for bone in context.selected_pose_bones:
-            bone.custom_shape = custom_shape
 
         return {'FINISHED'}
 
@@ -1089,8 +1089,9 @@ class ADH_RiggingToolsPanel(bpy.types.Panel):
                  **toggle_settings(props.show_bone_tools))
         if props.show_bone_tools:
             col = row.column(align=1)
-            col.operator('armature.adh_create_hooks')
-            col.operator('armature.adh_create_spokes')
+            row1 = col.row(align=1)
+            row1.operator('armature.adh_create_hooks', text='Hooks')
+            row1.operator('armature.adh_create_spokes', text='Spokes')
             col.operator('armature.adh_create_bone_group')
             col.operator('armature.adh_remove_vertex_groups_unselected_bones',
                          text='Remove Unselected VG')
