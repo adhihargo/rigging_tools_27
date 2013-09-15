@@ -13,6 +13,8 @@ A collection of Blender operators for my personal rigging needs:
 
 - **Mask Selected Vertices**. Add a Mask modifier to active mesh object, then assign selected vertices to the vertex group used as mask in the modifier. Modifier alters behavior: Shift-LMB removes selected vertices from mask vertex group, and Ctrl-LMB inverts the vertex group. Works either in Edit mode or otherwise.
 
+- **Delete Mask**. Delete mask created by *Mask Selected Vertices* and its vertex group.
+
 ### Custom Shape ###
 
 - **Copy Custom Shapes**. Copies custom shape from one armature to another (on bones with similar name). Sometimes, without knowing the cause, all custom shapes in an armature already well-fit to a character just vanishes. Gone. And it's bloody annoying to reattach them one by one, thus this operator.

@@ -136,8 +136,53 @@ class ADH_ApplyLattices(bpy.types.Operator):
 
         return {'FINISHED'}
 
-class ADH_MaskSelectedVertices(bpy.types.Operator):
-    """Using a Mask modifier, shows only selected vertices"""
+class ADH_AbstractMaskOperator:
+    MASK_NAME = 'Z_ADH_MASK'
+
+    @classmethod
+    def poll(self, context):
+        return context.active_object != None\
+            and context.active_object.type == 'MESH'
+
+    orig_vg = None
+
+    def save_vg(self, context):
+        self.orig_vg = context.object.vertex_groups.active
+
+    def restore_vg(self, context):
+        if self.orig_vg:
+            context.object.vertex_groups.active_index = self.orig_vg.index
+
+    def setup_mask_modifier(self, context):
+        mesh = context.active_object
+        mm = mesh.modifiers.get(self.MASK_NAME)
+        if not mm or mm.type != 'MASK':
+            mm = mesh.modifiers.new(self.MASK_NAME, 'MASK')
+        mm.show_render = False
+        mm.show_expanded = False
+        mm.vertex_group = self.MASK_NAME
+
+class ADH_DeleteMask(bpy.types.Operator, ADH_AbstractMaskOperator):
+    """Delete mask and its vertex group."""
+    bl_idname = 'mesh.adh_delete_mask'
+    bl_label = 'Delete Mask'
+    bl_options = {'REGISTER'}
+
+    def execute(self, context):
+        mesh = context.active_object
+
+        mm = mesh.modifiers.get(self.MASK_NAME)
+        if mm and mm.type == 'MASK':
+            mesh.modifiers.remove(mm)
+
+        vg = mesh.vertex_groups.get(self.MASK_NAME)
+        if vg:
+            mesh.vertex_groups.remove(vg)
+
+        return {'FINISHED'}
+
+class ADH_MaskSelectedVertices(bpy.types.Operator, ADH_AbstractMaskOperator):
+    """Add selected vertices to mask"""
     bl_idname = 'mesh.adh_mask_selected_vertices'
     bl_label = 'Mask Selected Vertices'
     bl_options = {'REGISTER'}
@@ -150,20 +195,13 @@ class ADH_MaskSelectedVertices(bpy.types.Operator):
         default = 'add',
         options = {'HIDDEN', 'SKIP_SAVE'})
 
-    MASK_NAME = 'Z_ADH_MASK'
-
-    @classmethod
-    def poll(self, context):
-        return context.active_object != None\
-            and context.active_object.type == 'MESH'
-
     def invoke(self, context, event):
         mesh = context.active_object
+        self.save_vg(context)
 
         if event.shift: self.action = 'remove'
         elif event.ctrl: self.action = 'invert'
 
-        orig_vg = mesh.vertex_groups.active
         vg = mesh.vertex_groups.get(self.MASK_NAME)
         if not vg:
             vg = mesh.vertex_groups.new(self.MASK_NAME)
@@ -171,17 +209,8 @@ class ADH_MaskSelectedVertices(bpy.types.Operator):
 
         if self.action == 'invert':
             bpy.ops.object.vertex_group_invert()
-            # if not mm or mm.type != 'MASK': return {'CANCELLED'}
-            # mm.invert_vertex_group = not mm.invert_vertex_group
-            # return {'FINISHED'}
 
-        mm = mesh.modifiers.get(self.MASK_NAME)
-
-        if not mm or mm.type != 'MASK':
-            mm = mesh.modifiers.new(self.MASK_NAME, 'MASK')
-            mm.show_render = False
-            mm.show_expanded = False
-            mm.vertex_group = self.MASK_NAME
+        self.setup_mask_modifier(context)
 
         mesh.data.update()
         selected_verts = [vert.index for vert in mesh.data.vertices
@@ -198,8 +227,7 @@ class ADH_MaskSelectedVertices(bpy.types.Operator):
             else:
                 vg.remove(selected_verts)
 
-        if orig_vg:
-            mesh.vertex_groups.active_index = orig_vg.index
+        self.restore_vg(context)
 
         return {'FINISHED'}
 
@@ -1072,7 +1100,9 @@ class ADH_RiggingToolsPanel(bpy.types.Panel):
             col = row.column(align=1)
             col.operator('mesh.adh_add_subsurf_modifier', text='Add Subsurf')
             col.operator('mesh.adh_apply_lattices')
-            col.operator('mesh.adh_mask_selected_vertices')
+            row1 = col.row(align=1)
+            row1.operator('mesh.adh_mask_selected_vertices')
+            row1.operator('mesh.adh_delete_mask', text='', icon='X_VEC')
 
         row = layout.row()
         row.prop(props, 'show_custom_shape_tools',
@@ -1116,16 +1146,20 @@ class ADH_RiggingToolsProps(bpy.types.PropertyGroup):
         options={'SKIP_SAVE'})
     show_modifier_tools = BoolProperty(
         name='Modifier',
-        description='Show modifier tools')
+        description='Show modifier tools',
+        default=True)
     show_custom_shape_tools = BoolProperty(
         name='Custom Shape',
-        description='Show custom shape tools')
+        description='Show custom shape tools',
+        default=True)
     show_bone_tools = BoolProperty(
         name='Bone',
-        description='Show bone tools')
+        description='Show bone tools',
+        default=True)
     show_sync_tools = BoolProperty(
         name='Sync',
-        description='Show sync tools')
+        description='Show sync tools',
+        default=True)
 
 @persistent
 def turn_off_glsl_handler(dummy):
