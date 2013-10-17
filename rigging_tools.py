@@ -299,8 +299,7 @@ class ADH_CreateCustomShape(bpy.types.Operator):
                  ('box', 'Box', ''),
                  ('fourways', 'Four-Ways', 'Circle with arrows to four directions - 40 vertices'),
                  ('fourgaps', 'Four-Gaps', 'Broken circle that complements Four-Ways - 20 vertices'),
-                 ('selected', 'Selected', 'Shape of selected object')],
-        options = {'SKIP_SAVE'})
+                 ('selected', 'Selected', 'Shape of selected object')])
 
     widget_size = FloatProperty(
         name = 'Size',
@@ -308,8 +307,7 @@ class ADH_CreateCustomShape(bpy.types.Operator):
         min = 0,
         max = 2,
         step = 10,
-        description = "Widget's scale as relative to bone.",
-        options = {'SKIP_SAVE'})
+        description = "Widget's scale as relative to bone.")
 
     widget_pos = FloatProperty(
         name = 'Position',
@@ -318,8 +316,7 @@ class ADH_CreateCustomShape(bpy.types.Operator):
         max = 1.5,
         step = 5,
         precision = 1,
-        description = "Widget's position along bone's length. 0.0 = base, 1.0 = tip.",
-        options = {'SKIP_SAVE'})
+        description = "Widget's position along bone's length. 0.0 = base, 1.0 = tip.")
 
     widget_rot = FloatProperty(
         name = 'Rotation',
@@ -328,14 +325,12 @@ class ADH_CreateCustomShape(bpy.types.Operator):
         max = 90,
         step = 10,
         precision = 1,
-        description = "Widget's rotation along bone's X axis.",
-        options = {'SKIP_SAVE'})
+        description = "Widget's rotation along bone's X axis.")
 
     widget_prefix = StringProperty(
         name = 'Prefix',
         description = "Prefix for the new widget's name",
-        default = 'wgt-',
-        )
+        default = 'wgt-')
 
     widget_layers = BoolVectorProperty(
         name = "Layers",
@@ -1074,8 +1069,7 @@ class ADH_SyncCustomShapePositionToBone(bpy.types.Operator):
 
         return {'FINISHED'}
 
-class ADH_RiggingToolsPanel(bpy.types.Panel):
-    bl_idname = 'OBJECT_PT_ADH_rigging_tools'
+class ADH_rigging_tools(bpy.types.Panel):
     bl_label = 'ADH Rigging Tools'
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
@@ -1090,7 +1084,8 @@ class ADH_RiggingToolsPanel(bpy.types.Panel):
         col.prop(context.scene.adh_rigging_tools, 'regex_replacement_string')
 
         toggle_settings = lambda x:\
-            dict(icon_only=True, emboss=False, icon='RADIOBUT_ON', text='') if x else\
+            dict(icon_only=True, emboss=False, icon='RADIOBUT_ON', text='') \
+            if x else \
             dict(icon_only=False, emboss=False, icon='RADIOBUT_OFF')
 
         row = layout.row()
