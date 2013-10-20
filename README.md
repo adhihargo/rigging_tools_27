@@ -51,3 +51,8 @@ A collection of Blender operators for my personal rigging needs:
 
 - **Sync Custom Shape Position to Bone**. Sync a mesh object's position to each selected bone using it as a custom shape. Made it easier to create custom shapes with better precision. Depends on Rigify being installed.
 
+### Driver ###
+
+- **Copy Driver Settings**. Works only for active object, in Graph Editor - Driver editing mode. Copies all driver type, expression and variables from the topmost selected channel to all other selected channels, for easier manipulation of large amounts of driver.
+
+  There is a textfield above this operator's button that specifies increment/decrement amount for each integer in the expression script. For example, filling this textfield with "1+1 2-10" means increase each 1st integer in expression by one, and decrease each 2nd integer by ten (`(var * 2) + 20` turns to `(var * 3) + 10`, `(var * 4) + 0`, etc. at each copying).

@@ -1107,7 +1107,136 @@ class ADH_RapidPasteDriver(bpy.types.Operator):
 
         return {'RUNNING_MODAL'}
 
-class ADH_rigging_tools(bpy.types.Panel):
+class ADH_CopyDriverSettings(bpy.types.Operator):
+    """Copy driver settings."""
+    bl_idname = 'anim.adh_copy_driver_settings'
+    bl_label = 'Copy Driver Settings'
+    bl_options = {'REGISTER', 'UNDO'}
+
+    increment_dict = {}
+
+    @classmethod
+    def poll(self, context):
+        return context.space_data.type == 'GRAPH_EDITOR'\
+            and context.space_data.mode == 'DRIVERS'\
+            and context.active_object != None
+
+    def invoke(self, context, event):
+        obj = context.active_object
+        props = context.scene.adh_rigging_tools
+
+        self.generate_increment_dict(props.driver_increment_index)
+        keyable_list = [getattr(obj.data, 'shape_keys', None)]
+        for ms in obj.material_slots:
+            if not ms:
+                continue
+            keyable_list.append(ms.material)
+            for ts in ms.material.texture_slots:
+                if not ts:
+                    continue
+                keyable_list.append(ts.texture)
+        for ps in obj.particle_systems:
+            keyable_list.append(ps.settings)
+        keyable_list.append(obj)
+        keyable_list.append(obj.data)
+
+        self.process_keyable_list(context, keyable_list)
+
+        return {'FINISHED'}
+
+    def generate_increment_dict(self, increment_list_str):
+        increment_dict_re = re.compile(r"(\d+)\D*([+-])\D*(\d+)\D*")
+
+        start_pos = 0
+        key = 0
+        increment = 0
+        while True:
+            match_obj = increment_dict_re.search(increment_list_str, start_pos)
+            if not match_obj:
+                break
+
+            key = int(match_obj.group(1))
+            increment = int(match_obj.group(3))
+            if(match_obj.group(2) == '-'):
+                increment *= -1
+
+            self.increment_dict[key] = increment
+            start_pos = match_obj.end()
+
+    def process_keyable_list(self, context, keyable_list):
+        props = context.scene.adh_rigging_tools
+
+        driver = None
+        index = 1
+        for keyable in keyable_list:
+            if not keyable or not keyable.animation_data:
+                continue
+            for fc in keyable.animation_data.drivers:
+                if not fc.select:
+                    continue
+                if driver:
+                    self.copy_driver_variables(fc, driver, index)
+                    index += 1
+                else:
+                    driver = fc.driver
+
+    def copy_driver_variables(self, fc, driver, driver_index):
+        fc.driver.show_debug_info = driver.show_debug_info
+        fc.driver.type = driver.type
+        fc.driver.expression = self.substitute_incremented(driver.expression,
+                                                           driver_index)
+
+        for dv in fc.driver.variables:
+            fc.driver.variables.remove(dv)
+        for dv in driver.variables:
+            fdv = fc.driver.variables.new()
+            fdv.name = dv.name
+            fdv.type = dv.type
+            target = fdv.targets[0]
+            target.bone_target = dv.targets[0].bone_target
+            target.id = dv.targets[0].id
+            # target.id_type = dv.targets[0].id_type
+            target.data_path = dv.targets[0].data_path
+            target.transform_space = dv.targets[0].transform_space
+            target.transform_type = dv.targets[0].transform_type
+
+    def substitute_incremented(self, expression, multiplier):
+        int_re = re.compile(r"\d+")
+
+        start_pos = 0
+        match_index = 1
+        newExpression = ''
+        while True:
+            match_obj = int_re.search(expression, start_pos)
+            if not match_obj:
+                newExpression += expression[start_pos:]
+                break
+
+            newExpression += expression[start_pos:match_obj.start()]
+            value = int(match_obj.group()) +\
+                (self.increment_dict.get(match_index, 0) * multiplier)
+            newExpression += str(value)
+
+            match_index += 1
+            start_pos = match_obj.end()
+
+        return newExpression
+
+class GRAPH_PT_adh_rigging_tools(bpy.types.Panel):
+    bl_label = 'ADH Rigging Tools'
+    bl_space_type = 'GRAPH_EDITOR'
+    bl_region_type = 'UI'
+
+    def draw(self, context):
+        layout = self.layout
+        props = context.scene.adh_rigging_tools
+
+        col = layout.column(align=1)
+        col.prop(props, 'driver_increment_index')
+        col.operator('anim.adh_copy_driver_settings')
+        
+
+class VIEW3D_PT_adh_rigging_tools(bpy.types.Panel):
     bl_label = 'ADH Rigging Tools'
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
@@ -1118,8 +1247,8 @@ class ADH_rigging_tools(bpy.types.Panel):
 
         col = layout.column(align=1)
         col.operator('object.adh_rename_regex')
-        col.prop(context.scene.adh_rigging_tools, 'regex_search_pattern')
-        col.prop(context.scene.adh_rigging_tools, 'regex_replacement_string')
+        col.prop(props, 'regex_search_pattern')
+        col.prop(props, 'regex_replacement_string')
 
         toggle_settings = lambda x:\
             dict(icon_only=True, emboss=False, icon='RADIOBUT_ON', text='') \
@@ -1169,6 +1298,10 @@ class ADH_rigging_tools(bpy.types.Panel):
             col.operator('object.adh_sync_shape_position_to_bone', text='CustShape.pos <- Bone.pos')
 
 class ADH_RiggingToolsProps(bpy.types.PropertyGroup):
+    driver_increment_index = StringProperty(
+        name='',
+        description='Index of integer within driver expression to increment',
+        options={'SKIP_SAVE'})
     regex_search_pattern = StringProperty(
         name='',
         description='Regular pattern to match against',
@@ -1212,7 +1345,8 @@ def turn_off_glsl_handler(dummy):
 def register():
     bpy.utils.register_module(__name__)
 
-    bpy.types.Scene.adh_rigging_tools = PointerProperty(type = ADH_RiggingToolsProps)
+    bpy.types.Scene.adh_rigging_tools = PointerProperty\
+        (type = ADH_RiggingToolsProps)
     bpy.app.handlers.load_post.append(turn_off_glsl_handler)
 
 def unregister():
