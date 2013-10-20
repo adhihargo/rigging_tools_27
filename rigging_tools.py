@@ -1069,6 +1069,44 @@ class ADH_SyncCustomShapePositionToBone(bpy.types.Operator):
 
         return {'FINISHED'}
 
+class ADH_RapidPasteDriver(bpy.types.Operator):
+    """Paste driver until Escape button is pressed."""
+    bl_idname = 'object.adh_rapid_paste_driver'
+    bl_label = 'Rapid Paste Driver'
+    bl_options = {'REGISTER', 'UNDO'}
+
+    _timer = None
+    _space = None
+
+    @classmethod
+    def poll(self, context):
+        return context.space_data.type == 'PROPERTIES'
+
+    def cancel(self, context):
+        context.window_manager.event_timer_remove(self._timer)
+        
+        return {'CANCELLED'}
+
+    def modal(self, context, event):
+        wm = context.window_manager
+
+        if event.type == 'ESC' or context.space_data != self._space:
+            wm.event_timer_remove(self._timer)
+            return {'FINISHED'}
+        elif event.type == 'TIMER':
+            bpy.ops.anim.paste_driver_button()
+
+        return {'PASS_THROUGH'}
+
+    def invoke(self, context, event):
+        wm = context.window_manager
+
+        wm.modal_handler_add(self)
+        self._timer = wm.event_timer_add(0.1, context.window)
+        self._space = context.space_data
+
+        return {'RUNNING_MODAL'}
+
 class ADH_rigging_tools(bpy.types.Panel):
     bl_label = 'ADH Rigging Tools'
     bl_space_type = 'VIEW_3D'
