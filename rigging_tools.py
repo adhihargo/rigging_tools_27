@@ -1020,15 +1020,14 @@ class ADH_BindToBone(bpy.types.Operator):
         for mesh in meshes:
             armature_mods = [m for m in mesh.modifiers
                              if m.type == 'ARMATURE' and m.object == armature]
-            print(armature_mods)
             if not armature_mods:
                 am = mesh.modifiers.new('Armature', 'ARMATURE')
                 am.object = armature
-            vg = mesh.vertex_groups.get(bone.name)
-            if not vg:
-                vg = mesh.vertex_groups.new(bone.name)
-                vg.add(range(len(mesh.data.vertices)), 1.0, 'REPLACE')
-                
+
+            mesh.vertex_groups.clear()
+            vg = mesh.vertex_groups.new(bone.name)
+            vg.add(range(len(mesh.data.vertices)), 1.0, 'REPLACE')
+
         return {'FINISHED'}
 
 class ADH_SyncObjectDataNameToObject(bpy.types.Operator):
