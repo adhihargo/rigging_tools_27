@@ -1119,14 +1119,16 @@ class ADH_CopyDriverSettings(bpy.types.Operator):
     def poll(self, context):
         return context.space_data.type == 'GRAPH_EDITOR'\
             and context.space_data.mode == 'DRIVERS'\
-            and context.active_object != None
+            and context.active_object != None\
+            and context.space_data.dopesheet.show_only_selected
 
     def invoke(self, context, event):
         obj = context.active_object
         props = context.scene.adh_rigging_tools
 
         self.generate_increment_dict(props.driver_increment_index)
-        keyable_list = [getattr(obj.data, 'shape_keys', None)]
+        shape_keys = getattr(obj.data, 'shape_keys', None)
+        keyable_list = [shape_keys] if shape_keys else []
         for ms in obj.material_slots:
             if not ms:
                 continue
