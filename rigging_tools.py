@@ -1223,6 +1223,20 @@ class ADH_CopyDriverSettings(bpy.types.Operator):
 
         return newExpression
 
+
+def draw_armature_specials(self, context):
+    layout = self.layout
+    layout.separator()
+
+    layout.menu("VIEW3D_MT_adh_armature_specials")
+    
+def draw_object_specials(self, context):
+    layout = self.layout
+    layout.separator()
+
+    layout.menu("VIEW3D_MT_adh_object_specials")
+
+
 class GRAPH_PT_adh_rigging_tools(bpy.types.Panel):
     bl_label = 'ADH Rigging Tools'
     bl_space_type = 'GRAPH_EDITOR'
@@ -1298,6 +1312,39 @@ class VIEW3D_PT_adh_rigging_tools(bpy.types.Panel):
             col.operator('object.adh_sync_data_name_to_object', text='ObData.name <- Ob.name')
             col.operator('object.adh_sync_shape_position_to_bone', text='CustShape.pos <- Bone.pos')
 
+class VIEW3D_MT_adh_object_specials(bpy.types.Menu):
+    bl_label = "ADH Rigging Tools"
+
+    def draw(self, context):
+        layout = self.layout
+        row = layout.row()
+
+        col = row.column()
+        col.operator('object.adh_sync_data_name_to_object', text='ObData.name <- Ob.name')
+
+class VIEW3D_MT_adh_armature_specials(bpy.types.Menu):
+    bl_label = "ADH Rigging Tools"
+    
+    def draw(self, context):
+        layout = self.layout
+        row = layout.row()
+        
+        col = row.column()
+        col.operator('armature.adh_use_same_shape')
+        col.operator('armature.adh_create_shape')
+        col.operator('armature.adh_select_shape')
+
+        col.separator()
+        col.operator('object.adh_sync_shape_position_to_bone', text='CustShape.pos <- Bone.pos')
+
+        col = row.column()
+        col.operator('armature.adh_create_hooks')
+        col.operator('armature.adh_create_spokes')
+        col.operator('armature.adh_create_bone_group')
+        col.operator('armature.adh_remove_vertex_groups_unselected_bones',
+                     text='Remove Unselected VG')
+        col.operator('armature.adh_bind_to_bone')
+
 class ADH_RiggingToolsProps(bpy.types.PropertyGroup):
     driver_increment_index = StringProperty(
         name='',
@@ -1349,12 +1396,18 @@ def register():
     bpy.types.Scene.adh_rigging_tools = PointerProperty\
         (type = ADH_RiggingToolsProps)
     bpy.app.handlers.load_post.append(turn_off_glsl_handler)
+    bpy.types.VIEW3D_MT_object_specials.append(draw_object_specials)
+    bpy.types.VIEW3D_MT_armature_specials.append(draw_armature_specials)
+    bpy.types.VIEW3D_MT_pose_specials.append(draw_armature_specials)
 
 def unregister():
     bpy.utils.unregister_module(__name__)
 
     del bpy.types.Scene.adh_rigging_tools
     bpy.app.handlers.load_post.remove(turn_off_glsl_handler)
+    bpy.types.VIEW3D_MT_object_specials.remove(draw_object_specials)
+    bpy.types.VIEW3D_MT_armature_specials.remove(draw_armature_specials)
+    bpy.types.VIEW3D_MT_pose_specials.remove(draw_armature_specials)
 
 if __name__ == "__main__":
     register()
