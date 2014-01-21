@@ -649,8 +649,9 @@ class ADH_CreateHooks(bpy.types.Operator):
 
         armature_mat_inv = armature.matrix_world.inverted()
         lattice_mat = lattice.matrix_world
-        selected_points = [point for point in lattice.data.points
-                           if point.select]
+        selected_points = sorted([point for point in lattice.data.points
+                                  if point.select],
+                                 key = lambda p: p.co.y + p.co.z)
 
         objects.active = armature
         prev_mode = armature.mode
