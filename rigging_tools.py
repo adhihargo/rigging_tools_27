@@ -26,6 +26,7 @@ import re
 from bpy.app.handlers import persistent
 from bpy.props import BoolProperty, BoolVectorProperty, EnumProperty,\
     FloatProperty, StringProperty, PointerProperty
+from bpy.types import Menu, Operator, Panel
 from mathutils import Vector, Matrix
 
 bl_info = {
@@ -45,7 +46,7 @@ PRF_TIP = "tip-"
 PRF_HOOK = "hook-"
 BBONE_BASE_SIZE = 0.01
 
-class ADH_RenameRegex(bpy.types.Operator):
+class ADH_RenameRegex(Operator):
     """Renames selected objects or bones using regular expressions. Depends on re, standard library module."""
     bl_idname = 'object.adh_rename_regex'
     bl_label = 'Rename Regex'
@@ -80,7 +81,7 @@ class ADH_RenameRegex(bpy.types.Operator):
 
         return {'FINISHED'}
 
-class ADH_AddSubdivisionSurfaceModifier(bpy.types.Operator):
+class ADH_AddSubdivisionSurfaceModifier(Operator):
     """Add subdivision surface modifier to selected objects, if none given yet."""
     bl_idname = 'mesh.adh_add_subsurf_modifier'
     bl_label = 'Add Subdivision Surface Modifier'
@@ -112,7 +113,7 @@ class ADH_AddSubdivisionSurfaceModifier(bpy.types.Operator):
 
         return {'FINISHED'}
 
-class ADH_ApplyLattices(bpy.types.Operator):
+class ADH_ApplyLattices(Operator):
     """Applies all lattice modifiers, deletes all shapekeys. Used for lattice-initialized shapekey creation."""
     bl_idname = 'mesh.adh_apply_lattices'
     bl_label = 'Apply Lattices'
@@ -162,7 +163,7 @@ class ADH_AbstractMaskOperator:
         mm.show_expanded = False
         mm.vertex_group = self.MASK_NAME
 
-class ADH_DeleteMask(bpy.types.Operator, ADH_AbstractMaskOperator):
+class ADH_DeleteMask(Operator, ADH_AbstractMaskOperator):
     """Delete mask and its vertex group."""
     bl_idname = 'mesh.adh_delete_mask'
     bl_label = 'Delete Mask'
@@ -181,7 +182,7 @@ class ADH_DeleteMask(bpy.types.Operator, ADH_AbstractMaskOperator):
 
         return {'FINISHED'}
 
-class ADH_MaskSelectedVertices(bpy.types.Operator, ADH_AbstractMaskOperator):
+class ADH_MaskSelectedVertices(Operator, ADH_AbstractMaskOperator):
     """Add selected vertices to mask"""
     bl_idname = 'mesh.adh_mask_selected_vertices'
     bl_label = 'Mask Selected Vertices'
@@ -231,7 +232,7 @@ class ADH_MaskSelectedVertices(bpy.types.Operator, ADH_AbstractMaskOperator):
 
         return {'FINISHED'}
 
-class ADH_CopyCustomShapes(bpy.types.Operator):
+class ADH_CopyCustomShapes(Operator):
     """Copies custom shapes from one armature to another (on bones with similar name)."""
     bl_idname = 'armature.adh_copy_shapes'
     bl_label = 'Copy Custom Shapes'
@@ -258,7 +259,7 @@ class ADH_CopyCustomShapes(bpy.types.Operator):
 
         return {'FINISHED'}
 
-class ADH_UseSameCustomShape(bpy.types.Operator):
+class ADH_UseSameCustomShape(Operator):
     """Copies active pose bone's custom shape to each selected pose bone."""
     bl_idname = 'armature.adh_use_same_shape'
     bl_label = 'Use Same Custom Shape'
@@ -283,7 +284,7 @@ class ADH_UseSameCustomShape(bpy.types.Operator):
 
         return {'FINISHED'}
 
-class ADH_CreateCustomShape(bpy.types.Operator):
+class ADH_CreateCustomShape(Operator):
     """Creates mesh for custom shape for selected bones, at active bone's position, using its name as suffix."""
     bl_idname = 'armature.adh_create_shape'
     bl_label = 'Create Custom Shape'
@@ -591,7 +592,7 @@ class ADH_CreateCustomShape(bpy.types.Operator):
     def invoke(self, context, event):
         return self.execute(context)
 
-class ADH_SelectCustomShape(bpy.types.Operator):
+class ADH_SelectCustomShape(Operator):
     """Selects custom shape object of active bone."""
     bl_idname = 'armature.adh_select_shape'
     bl_label = 'Select Custom Shape'
@@ -617,7 +618,7 @@ class ADH_SelectCustomShape(bpy.types.Operator):
 
         return {'FINISHED'}
 
-class ADH_CreateHooks(bpy.types.Operator):
+class ADH_CreateHooks(Operator):
     """Creates parentless bone for each selected bones (local copy-transformed) or lattice points."""
     bl_idname = 'armature.adh_create_hooks'
     bl_label = 'Create Hooks'
@@ -741,7 +742,7 @@ class ADH_CreateHooks(bpy.types.Operator):
         self.invoked = True
         return retval
 
-class ADH_CreateSpokes(bpy.types.Operator):
+class ADH_CreateSpokes(Operator):
     """Creates parentless bones in selected armature from the 3D cursor, ending at each selected vertices of active mesh object."""
     bl_idname = 'armature.adh_create_spokes'
     bl_label = 'Create Spokes'
@@ -947,7 +948,7 @@ class ADH_CreateSpokes(bpy.types.Operator):
         self.invoked = True
         return retval
 
-class ADH_CreateBoneGroup(bpy.types.Operator):
+class ADH_CreateBoneGroup(Operator):
     """Creates a new bone group named after active bone, consisting of all selected bones."""
     bl_idname = 'armature.adh_create_bone_group'
     bl_label = 'Create Bone Group'
@@ -978,7 +979,7 @@ class ADH_CreateBoneGroup(bpy.types.Operator):
         
         return {'FINISHED'}
 
-class ADH_RemoveVertexGroupsUnselectedBones(bpy.types.Operator):
+class ADH_RemoveVertexGroupsUnselectedBones(Operator):
     """Removes all vertex groups other than selected bones.
 
     Used right after automatic weight assignment, to remove unwanted bone influence."""
@@ -1003,7 +1004,7 @@ class ADH_RemoveVertexGroupsUnselectedBones(bpy.types.Operator):
 
         return {'FINISHED'}
 
-class ADH_BindToBone(bpy.types.Operator):
+class ADH_BindToBone(Operator):
     """Binds all selected objects to selected bone, adding armature and vertex group if none exist yet."""
     bl_idname = 'armature.adh_bind_to_bone'
     bl_label = 'Bind to Bone'
@@ -1031,7 +1032,7 @@ class ADH_BindToBone(bpy.types.Operator):
 
         return {'FINISHED'}
 
-class ADH_SyncObjectDataNameToObject(bpy.types.Operator):
+class ADH_SyncObjectDataNameToObject(Operator):
     """Sync an object data's name to the object's. Made it easier to reuse object data among separate files."""
     bl_idname = 'object.adh_sync_data_name_to_object'
     bl_label = 'Sync Object Data Name To Object'
@@ -1048,7 +1049,7 @@ class ADH_SyncObjectDataNameToObject(bpy.types.Operator):
 
         return {'FINISHED'}
 
-class ADH_SyncCustomShapePositionToBone(bpy.types.Operator):
+class ADH_SyncCustomShapePositionToBone(Operator):
     """Sync a mesh object's position to each selected bone using it as a custom shape. Depends on Rigify."""
     bl_idname = 'object.adh_sync_shape_position_to_bone'
     bl_label = 'Sync Custom Shape Position to Bone'
@@ -1069,7 +1070,7 @@ class ADH_SyncCustomShapePositionToBone(bpy.types.Operator):
 
         return {'FINISHED'}
 
-class ADH_RapidPasteDriver(bpy.types.Operator):
+class ADH_RapidPasteDriver(Operator):
     """Paste driver until Escape button is pressed."""
     bl_idname = 'object.adh_rapid_paste_driver'
     bl_label = 'Rapid Paste Driver'
@@ -1107,7 +1108,7 @@ class ADH_RapidPasteDriver(bpy.types.Operator):
 
         return {'RUNNING_MODAL'}
 
-class ADH_CopyDriverSettings(bpy.types.Operator):
+class ADH_CopyDriverSettings(Operator):
     """Copy driver settings."""
     bl_idname = 'anim.adh_copy_driver_settings'
     bl_label = 'Copy Driver Settings'
@@ -1238,7 +1239,7 @@ def draw_object_specials(self, context):
     layout.menu("VIEW3D_MT_adh_object_specials")
 
 
-class GRAPH_PT_adh_rigging_tools(bpy.types.Panel):
+class GRAPH_PT_adh_rigging_tools(Panel):
     bl_label = 'ADH Rigging Tools'
     bl_space_type = 'GRAPH_EDITOR'
     bl_region_type = 'UI'
@@ -1252,7 +1253,7 @@ class GRAPH_PT_adh_rigging_tools(bpy.types.Panel):
         col.operator('anim.adh_copy_driver_settings')
         
 
-class VIEW3D_PT_adh_rigging_tools(bpy.types.Panel):
+class VIEW3D_PT_adh_rigging_tools(Panel):
     bl_label = 'ADH Rigging Tools'
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
@@ -1313,7 +1314,7 @@ class VIEW3D_PT_adh_rigging_tools(bpy.types.Panel):
             col.operator('object.adh_sync_data_name_to_object', text='ObData.name <- Ob.name')
             col.operator('object.adh_sync_shape_position_to_bone', text='CustShape.pos <- Bone.pos')
 
-class VIEW3D_MT_adh_object_specials(bpy.types.Menu):
+class VIEW3D_MT_adh_object_specials(Menu):
     bl_label = "ADH Rigging Tools"
 
     def draw(self, context):
@@ -1323,7 +1324,7 @@ class VIEW3D_MT_adh_object_specials(bpy.types.Menu):
         col = row.column()
         col.operator('object.adh_sync_data_name_to_object', text='ObData.name <- Ob.name')
 
-class VIEW3D_MT_adh_armature_specials(bpy.types.Menu):
+class VIEW3D_MT_adh_armature_specials(Menu):
     bl_label = "ADH Rigging Tools"
     
     def draw(self, context):
