@@ -1007,8 +1007,14 @@ class ADH_RemoveVertexGroupsUnselectedBones(Operator):
 class ADH_BindToBone(Operator):
     """Binds all selected objects to selected bone, adding armature and vertex group if none exist yet."""
     bl_idname = 'armature.adh_bind_to_bone'
-    bl_label = 'Bind to Bone'
+    bl_label = 'Bind Object to Bone'
     bl_options = {'REGISTER', 'UNDO'}
+
+    only_selected = BoolProperty(
+        name = "Only Selected",
+        description = "Bind only selected vertices.",
+        default = False,
+        options = {'SKIP_SAVE'})
 
     @classmethod
     def poll(self, context):
@@ -1026,11 +1032,22 @@ class ADH_BindToBone(Operator):
                 am = mesh.modifiers.new('Armature', 'ARMATURE')
                 am.object = armature
 
-            mesh.vertex_groups.clear()
-            vg = mesh.vertex_groups.new(bone.name)
-            vg.add(range(len(mesh.data.vertices)), 1.0, 'REPLACE')
+            vertex_indices = [v.index for v in mesh.data.vertices if v.select]\
+                if self.only_selected else range(len(mesh.data.vertices))
+            vg = mesh.vertex_groups.get(bone.name, None)
+            for other_vg in mesh.vertex_groups:
+                if other_vg == vg:
+                    continue
+                other_vg.remove(vertex_indices)
+            if not vg:
+                vg = mesh.vertex_groups.new(bone.name)
+            vg.add(vertex_indices, 1.0, 'REPLACE')
 
         return {'FINISHED'}
+
+    def invoke(self, context, event):
+        self.only_selected = event.shift
+        return self.execute(context)
 
 class ADH_SyncObjectDataNameToObject(Operator):
     """Sync an object data's name to the object's. Made it easier to reuse object data among separate files."""
