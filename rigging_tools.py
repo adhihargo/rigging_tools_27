@@ -999,7 +999,7 @@ class ADH_RemoveVertexGroupsUnselectedBones(Operator):
         
         for obj in affected_objects:
             for vg in obj.vertex_groups:
-                if not vg.name in bone_names:
+                if not (vg.name in bone_names or vg.lock_weight):
                     obj.vertex_groups.remove(vg)
 
         return {'FINISHED'}
