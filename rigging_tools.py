@@ -331,7 +331,7 @@ class ADH_CreateCustomShape(Operator):
     widget_prefix = StringProperty(
         name = 'Prefix',
         description = "Prefix for the new widget's name",
-        default = 'wgt-')
+        default = 'WGT-')
 
     widget_layers = BoolVectorProperty(
         name = "Layers",
