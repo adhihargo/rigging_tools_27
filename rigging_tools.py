@@ -1365,6 +1365,21 @@ class VIEW3D_MT_adh_armature_specials(Menu):
                      text='Remove Unselected VG')
         col.operator('armature.adh_bind_to_bone')
 
+class ADH_RiggingToolsPreferences(bpy.types.AddonPreferences):
+    bl_idname = __name__
+
+    # Preferences
+    hide_particles_modifier = BoolProperty(
+        name = "Hide Particles Modifier")
+    hide_multires_modifier = BoolProperty(
+        name = "Hide MultiRes Modifier")
+
+    def draw(self, context):
+        layout = self.layout
+
+        layout.prop(self, "hide_particles_modifier")
+        layout.prop(self, "hide_multires_modifier")
+
 class ADH_RiggingToolsProps(bpy.types.PropertyGroup):
     driver_increment_index = StringProperty(
         name='',
@@ -1409,6 +1424,16 @@ def turn_off_glsl_handler(dummy):
     scene = bpy.context.scene
     if scene and scene.game_settings.material_mode == 'GLSL':
         scene.game_settings.material_mode = 'MULTITEXTURE'
+
+    prefs = bpy.context.user_preferences.addons[__name__].preferences
+    for obj in scene.objects:
+        for mod in obj.modifiers:
+            if mod.type == "MULTIRES" and prefs.hide_multires_modifier:
+                mod.levels = 0
+                mod.sculpt_levels = 0
+                mod.show_viewport = False
+            elif mod.type.startswith("PARTICLE_") and prefs.hide_particles_modifier:
+                mod.show_viewport = False
 
 def register():
     bpy.utils.register_module(__name__)
