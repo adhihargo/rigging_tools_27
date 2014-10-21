@@ -1274,6 +1274,7 @@ class VIEW3D_PT_adh_rigging_tools(Panel):
     bl_label = 'ADH Rigging Tools'
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
+    bl_category = 'Tools'
 
     def draw(self, context):
         layout = self.layout
