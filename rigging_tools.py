@@ -650,16 +650,24 @@ class ADH_CreateHooks(Operator):
 
         armature_mat_inv = armature.matrix_world.inverted()
         lattice_mat = lattice.matrix_world
-        selected_points = sorted([point for point in lattice.data.points
-                                  if point.select],
-                                 key = lambda p: p.co.y + p.co.z)
+        get_selected_points = lambda l: sorted(
+            [point for point in lattice.data.points if point.select],
+            key = lambda p: p.co.y + p.co.z)
+        lattice_pos = get_selected_points(lattice)
+        bone_pos = [armature_mat_inv * (lattice_mat * point.co)
+                    for point in lattice_pos]
+        bone_names = [
+            "%(prefix)s%(lat)s.%(sum)1.1e%(suffix)s" %
+            dict(prefix=PRF_HOOK, lat=lattice.name,
+                 sum=math.fsum([abs(point.x), 10*abs(point.y), 100*abs(point.z)]),
+                 suffix=".L" if point.x < 0 else ".R" if point.x > 0 else "")
+            for point in bone_pos]
 
         objects.active = armature
         prev_mode = armature.mode
         bpy.ops.object.mode_set(mode='EDIT')
-        for index, point in enumerate(selected_points):
-            point_co = armature_mat_inv * (lattice_mat * point.co)
-            bone_name = "%s%s.%03d" % (PRF_HOOK, lattice.name, index)
+        for index, point_co in enumerate(bone_pos):
+            bone_name = bone_names[index]
             bone = armature.data.edit_bones.new(bone_name)
             bone.head = point_co
             bone.tail = point_co + Vector([0, 0, BBONE_BASE_SIZE * 5])
@@ -673,12 +681,11 @@ class ADH_CreateHooks(Operator):
 
         objects.active = lattice
         bpy.ops.object.mode_set(mode='EDIT')
-        selected_points = [point for point in lattice.data.points
-                           if point.select] # previous one lost after toggling
+        selected_points = get_selected_points(lattice) # previous one lost after toggling
         for point in selected_points:
             point.select = False
         for index, point in enumerate(selected_points):
-            bone_name = "%s%s.%03d" % (PRF_HOOK, lattice.name, index)
+            bone_name = bone_names[index]
             mod = lattice.modifiers.new(bone_name, 'HOOK')
             mod.object = armature
             mod.subtarget = bone_name
