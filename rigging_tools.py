@@ -650,17 +650,19 @@ class ADH_CreateHooks(Operator):
 
         armature_mat_inv = armature.matrix_world.inverted()
         lattice_mat = lattice.matrix_world
-        get_selected_points = lambda l: sorted(
-            [point for point in lattice.data.points if point.select],
-            key = lambda p: p.co.y + p.co.z)
+        global_lat_point_co = lambda p: armature_mat_inv * (lattice_mat * p)
+        get_selected_points = lambda lat: [
+            point for point in lat.data.points if point.select]
         lattice_pos = get_selected_points(lattice)
-        bone_pos = [armature_mat_inv * (lattice_mat * point.co)
-                    for point in lattice_pos]
+        bone_pos = [global_lat_point_co(point.co) for point in lattice_pos]
         bone_names = [
             "%(prefix)s%(lat)s.%(sum)1.1e%(suffix)s" %
             dict(prefix=PRF_HOOK, lat=lattice.name,
-                 sum=math.fsum([abs(point.x), 10*abs(point.y), 100*abs(point.z)]),
-                 suffix=".L" if point.x < 0 else ".R" if point.x > 0 else "")
+                 sum=math.fsum([2*abs(global_lat_point_co(point).x),
+                                3*abs(global_lat_point_co(point).y),
+                                5*abs(global_lat_point_co(point).z)]),
+                 suffix=".R" if global_lat_point_co(point).x < 0\
+                 else ".L" if point.x > 0 else "")
             for point in bone_pos]
 
         objects.active = armature
