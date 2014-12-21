@@ -635,12 +635,12 @@ class ADH_CreateHooks(Operator):
     invoked = False
 
     def setup_copy_constraint(self, armature, bone_name):
-        hook = armature.pose.bones[PRF_HOOK + bone_name]
-        ct_constraint = hook.constraints.new('COPY_TRANSFORMS')
+        bone = armature.pose.bones[bone_name]
+        ct_constraint = bone.constraints.new('COPY_TRANSFORMS')
         ct_constraint.owner_space = 'LOCAL'
         ct_constraint.target_space = 'LOCAL'
         ct_constraint.target = armature
-        ct_constraint.subtarget = bone_name
+        ct_constraint.subtarget = PRF_HOOK + bone_name
 
     def hook_on_lattice(self, context, lattice, armature):
         objects = context.scene.objects
@@ -709,8 +709,8 @@ class ADH_CreateHooks(Operator):
             hook = armature.data.edit_bones.new(hook_name)
             hook.head = bone.head
             hook.tail = bone.tail
-            hook.bbone_x = bone.bbone_x / 2
-            hook.bbone_z = bone.bbone_z / 2
+            hook.bbone_x = bone.bbone_x * 2
+            hook.bbone_z = bone.bbone_z * 2
             hook.layers = self.hook_layers
             hook.use_deform = False
             hook.roll = bone.roll
