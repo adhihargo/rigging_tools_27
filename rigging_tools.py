@@ -1134,6 +1134,75 @@ class ADH_RapidPasteDriver(Operator):
 
         return {'RUNNING_MODAL'}
 
+class ADH_MapShapeKeysToBones(Operator):
+    """Create driver for shape keys, driven by selected bone of the same name."""
+    bl_idname = 'object.adh_map_shape_keys_to_bones'
+    bl_label = 'Map Shape Keys to Bones'
+    bl_options = {'REGISTER', 'UNDO'}
+
+    slider_axis = EnumProperty(
+        name = "Slider Axis",
+        items = [("LOC_X", "X", "X axis"), ("LOC_Y", "Y", "Y axis"),
+                 ("LOC_Z", "Z", "X axis")],
+        default = "LOC_X",
+    )
+
+    slider_distance = FloatProperty(
+        name = "Slider Distance",
+        min = -2.0, max = 2.0, default=0.2, step=0.05,
+        subtype="DISTANCE", unit="LENGTH",
+    )
+
+    @classmethod
+    def poll(self, context):
+        return context.active_object != None\
+            and context.active_object.type in ['MESH', 'LATTICE']\
+            and len(context.selected_objects) == 2
+
+    def execute(self, context):
+        obj1, obj2 = context.selected_objects
+        mesh = obj1.data
+        armature = obj2
+        if obj2.type in ["MESH", "LATTICE"]:
+            mesh = obj2.data
+            armature = obj1
+
+        if armature.type != "ARMATURE":
+            return {"CANCELLED"}
+
+        mesh_keys = mesh.shape_keys
+        if not mesh_keys.animation_data:
+            mesh_keys.animation_data_create()
+
+        slider_formula = "a * %0.1f" % (1.0 / self.slider_distance)\
+                         if self.slider_distance != 0.0 else "a"
+        for shape in mesh_keys.key_blocks:
+            # Create driver only if the shape key isn't Basis, the
+            # corresponding bone exists and is selected.
+            bone = armature.data.bones.get(shape.name, None)
+            if shape == mesh_keys.reference_key or not (bone and bone.select):
+                continue
+
+            data_path = 'key_blocks["%s"].value' % shape.name
+            fc = mesh_keys.driver_add(data_path)
+
+            dv = fc.driver.variables[0] if len(fc.driver.variables) > 0\
+                 else fc.driver.variables.new()
+            dv.name = "a"
+            dv.type = "TRANSFORMS"
+
+            target = dv.targets[0]
+            target.id = armature
+            target.bone_target = shape.name
+            target.data_path = dv.targets[0].data_path
+            target.transform_space = "LOCAL_SPACE"
+            target.transform_type = self.slider_axis
+
+            fc.driver.type = "SCRIPTED"
+            fc.driver.expression = slider_formula
+
+        return {"FINISHED"}
+
 class ADH_CopyDriverSettings(Operator):
     """Copy driver settings."""
     bl_idname = 'anim.adh_copy_driver_settings'
@@ -1347,6 +1416,9 @@ class VIEW3D_MT_adh_object_specials(Menu):
     def draw(self, context):
         layout = self.layout
         row = layout.row()
+
+        col = row.column()
+        col.operator('object.adh_map_shape_keys_to_bones')
 
         col = row.column()
         col.operator('object.adh_sync_data_name_to_object', text='ObData.name <- Ob.name')
