@@ -113,6 +113,46 @@ class ADH_AddSubdivisionSurfaceModifier(Operator):
 
         return {'FINISHED'}
 
+class ADH_BindToLattice(Operator):
+    """Bind selected objects to active lattice."""
+    bl_idname = 'lattice.adh_bind_to_objects'
+    bl_label = 'Bind Lattice to Objects'
+    bl_options = {'REGISTER', 'UNDO'}
+
+    create_vertex_group = BoolProperty(
+        name = "Create Vertex Group",
+        description = "Create limiting vertex group using the lattice object's name.",
+        default = False
+    )
+
+    @classmethod
+    def poll(self, context):
+        obj = context.active_object
+        return obj and obj.type == 'LATTICE' and context.selected_objects
+
+    def execute(self, context):
+        lattice = context.active_object
+        objects = [o for o in context.selected_objects if o.type == 'MESH']
+
+        for obj in objects:
+            lm_possibles = [m for m in obj.modifiers if
+                            m.type == 'LATTICE' and m.object == lattice]
+            if lm_possibles:
+                lm = lm_possibles[0]
+                lm.name == lattice.name
+            else:
+                lm = obj.modifiers.new(lattice.name, 'LATTICE')
+                lm.object = lattice
+
+            lm.show_expanded = False
+            if self.create_vertex_group:
+                vg = obj.vertex_groups.get(lattice.name, None)
+                if not vg:
+                    vg = obj.vertex_groups.new(lattice.name)
+                lm.vertex_group = vg.name
+
+        return {'FINISHED'}
+
 class ADH_ApplyLattices(Operator):
     """Applies all lattice modifiers, deletes all shapekeys. Used for lattice-initialized shapekey creation."""
     bl_idname = 'mesh.adh_apply_lattices'
@@ -1373,6 +1413,7 @@ class VIEW3D_PT_adh_rigging_tools(Panel):
                  **toggle_settings(props.show_modifier_tools))
         if props.show_modifier_tools:
             col = row.column(align=1)
+            col.operator('lattice.adh_bind_to_objects')
             col.operator('mesh.adh_add_subsurf_modifier', text='Add Subsurf')
             col.operator('mesh.adh_apply_lattices')
             row1 = col.row(align=1)
@@ -1418,6 +1459,7 @@ class VIEW3D_MT_adh_object_specials(Menu):
         row = layout.row()
 
         col = row.column()
+        col.operator('lattice.adh_bind_to_objects')
         col.operator('object.adh_map_shape_keys_to_bones')
 
         col = row.column()
