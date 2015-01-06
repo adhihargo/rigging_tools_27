@@ -1065,6 +1065,12 @@ class ADH_BindToBone(Operator):
         default = False,
         options = {'SKIP_SAVE'})
 
+    set_as_parent = BoolProperty(
+        name = "Set as Parent",
+        description = "Also parent object to armature.",
+        default = True,
+    )
+
     @classmethod
     def poll(self, context):
         return len(context.selected_objects) >= 2\
@@ -1080,6 +1086,9 @@ class ADH_BindToBone(Operator):
             if not armature_mods:
                 am = mesh.modifiers.new('Armature', 'ARMATURE')
                 am.object = armature
+
+            if self.set_as_parent:
+                mesh.parent = armature
 
             vertex_indices = [v.index for v in mesh.data.vertices if v.select]\
                 if self.only_selected else range(len(mesh.data.vertices))
