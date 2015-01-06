@@ -696,14 +696,11 @@ class ADH_CreateHooks(Operator):
         lattice_pos = get_selected_points(lattice)
         bone_pos = [global_lat_point_co(point.co) for point in lattice_pos]
         bone_names = [
-            "%(prefix)s%(lat)s.%(sum)1.1e%(suffix)s" %
-            dict(prefix=PRF_HOOK, lat=lattice.name,
-                 sum=math.fsum([2*abs(global_lat_point_co(point).x),
-                                3*abs(global_lat_point_co(point).y),
-                                5*abs(global_lat_point_co(point).z)]),
+            "%(prefix)s%(lat)s.%(index)d%(suffix)s" %
+            dict(prefix=PRF_HOOK, lat=lattice.name, index=index,
                  suffix=".R" if global_lat_point_co(point).x < 0\
                  else ".L" if point.x > 0 else "")
-            for point in bone_pos]
+            for index, point in enumerate(bone_pos)]
 
         objects.active = armature
         prev_mode = armature.mode
