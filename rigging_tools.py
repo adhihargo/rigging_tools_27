@@ -754,6 +754,7 @@ class ADH_CreateHooks(Operator):
             hook.layers = self.hook_layers
             hook.use_deform = False
             hook.roll = bone.roll
+            hook.parent = bone.parent
         bpy.ops.object.mode_set(mode='POSE')
         for bone in context.selected_pose_bones:
             self.setup_copy_constraint(armature, bone.name)
