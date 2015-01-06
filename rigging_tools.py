@@ -852,8 +852,11 @@ class ADH_CreateSpokes(Operator):
             parent_bone.tail += delta
 
         if parent_bone:
+            bone_parent = bone.parent
             bone.parent = parent_bone
             bone.use_connect = True
+
+            parent_bone.parent = bone_parent
 
     def setup_bone_tip(self, armature, bone):
         if not self.tip:
