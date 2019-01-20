@@ -1428,7 +1428,7 @@ class VIEW3D_PT_adh_rigging_tools(Panel):
             col.operator('mesh.adh_apply_lattices')
             row1 = col.row(align=1)
             row1.operator('mesh.adh_mask_selected_vertices')
-            row1.operator('mesh.adh_delete_mask', text='', icon='X_VEC')
+            row1.operator('mesh.adh_delete_mask', text='', icon='CANCEL')
 
         row = layout.row()
         row.prop(props, 'show_custom_shape_tools',
