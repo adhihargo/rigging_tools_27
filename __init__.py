@@ -24,7 +24,7 @@ import rigify
 import random
 import re
 from bpy.app.handlers import persistent
-from bpy.props import BoolProperty, BoolVectorProperty, EnumProperty,\
+from bpy.props import BoolProperty, BoolVectorProperty, EnumProperty, \
     FloatProperty, StringProperty, PointerProperty
 from bpy.types import Menu, Operator, Panel
 from mathutils import Vector, Matrix
@@ -46,6 +46,7 @@ PRF_TIP = "tip-"
 PRF_HOOK = "hook-"
 BBONE_BASE_SIZE = 0.01
 
+
 class ADH_RenameRegex(Operator):
     """Renames selected objects or bones using regular expressions. Depends on re, standard library module."""
     bl_idname = 'object.adh_rename_regex'
@@ -53,7 +54,7 @@ class ADH_RenameRegex(Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
-    def poll(self, context):
+    def poll(cls, context):
         return context.selected_objects != []
 
     def execute(self, context):
@@ -81,6 +82,7 @@ class ADH_RenameRegex(Operator):
 
         return {'FINISHED'}
 
+
 class ADH_AddSubdivisionSurfaceModifier(Operator):
     """Add subdivision surface modifier to selected objects, if none given yet."""
     bl_idname = 'mesh.adh_add_subsurf_modifier'
@@ -88,15 +90,15 @@ class ADH_AddSubdivisionSurfaceModifier(Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     show_viewport = BoolProperty(
-        name = 'Show in Viewport',
-        default = False,
-        description = "Show Subdivision Surface modifier's effect in viewport"
-        )
+        name='Show in Viewport',
+        default=False,
+        description="Show Subdivision Surface modifier's effect in viewport"
+    )
 
     @classmethod
-    def poll(self, context):
-        return context.mode == 'OBJECT'\
-            and context.selected_objects != []
+    def poll(cls, context):
+        return context.mode == 'OBJECT' \
+               and context.selected_objects != []
 
     def execute(self, context):
         meshes = [obj for obj in context.selected_objects if obj.type == 'MESH']
@@ -113,6 +115,7 @@ class ADH_AddSubdivisionSurfaceModifier(Operator):
 
         return {'FINISHED'}
 
+
 class ADH_BindToLattice(Operator):
     """Bind selected objects to active lattice."""
     bl_idname = 'lattice.adh_bind_to_objects'
@@ -120,9 +123,9 @@ class ADH_BindToLattice(Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     create_vertex_group = BoolProperty(
-        name = "Create Vertex Group",
-        description = "Create limiting vertex group using the lattice object's name.",
-        default = False
+        name="Create Vertex Group",
+        description="Create limiting vertex group using the lattice object's name.",
+        default=False
     )
 
     @classmethod
@@ -139,7 +142,7 @@ class ADH_BindToLattice(Operator):
                             m.type == 'LATTICE' and m.object == lattice]
             if lm_possibles:
                 lm = lm_possibles[0]
-                lm.name == lattice.name
+                lm.name = lattice.name
             else:
                 lm = obj.modifiers.new(lattice.name, 'LATTICE')
                 lm.object = lattice
@@ -153,6 +156,7 @@ class ADH_BindToLattice(Operator):
 
         return {'FINISHED'}
 
+
 class ADH_ApplyLattices(Operator):
     """Applies all lattice modifiers, deletes all shapekeys. Used for lattice-initialized shapekey creation."""
     bl_idname = 'mesh.adh_apply_lattices'
@@ -160,15 +164,15 @@ class ADH_ApplyLattices(Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
-    def poll(self, context):
-        return context.mode == 'OBJECT'\
-            and context.selected_objects != []\
-            and context.active_object.type == 'MESH'
+    def poll(cls, context):
+        return context.mode == 'OBJECT' \
+               and context.selected_objects != [] \
+               and context.active_object.type == 'MESH'
 
     def execute(self, context):
         obj = context.active_object
         if obj.data.shape_keys:
-            for i in range (len(obj.data.shape_keys.key_blocks), 0, -1):
+            for i in range(len(obj.data.shape_keys.key_blocks), 0, -1):
                 obj.active_shape_key_index = i - 1
                 bpy.ops.object.shape_key_remove()
         for m in obj.modifiers:
@@ -177,13 +181,14 @@ class ADH_ApplyLattices(Operator):
 
         return {'FINISHED'}
 
+
 class ADH_AbstractMaskOperator:
     MASK_NAME = 'Z_ADH_MASK'
 
     @classmethod
-    def poll(self, context):
-        return context.active_object != None\
-            and context.active_object.type == 'MESH'
+    def poll(cls, context):
+        return context.active_object is not None \
+               and context.active_object.type == 'MESH'
 
     orig_vg = None
 
@@ -202,6 +207,7 @@ class ADH_AbstractMaskOperator:
         mm.show_render = False
         mm.show_expanded = False
         mm.vertex_group = self.MASK_NAME
+
 
 class ADH_DeleteMask(Operator, ADH_AbstractMaskOperator):
     """Delete mask and its vertex group."""
@@ -222,6 +228,7 @@ class ADH_DeleteMask(Operator, ADH_AbstractMaskOperator):
 
         return {'FINISHED'}
 
+
 class ADH_MaskSelectedVertices(Operator, ADH_AbstractMaskOperator):
     """Add selected vertices to mask"""
     bl_idname = 'mesh.adh_mask_selected_vertices'
@@ -229,19 +236,21 @@ class ADH_MaskSelectedVertices(Operator, ADH_AbstractMaskOperator):
     bl_options = {'REGISTER'}
 
     action = EnumProperty(
-        name = 'Action',
-        items = [('add', 'Add', 'Add selected vertices to mask.'),
-                 ('remove', 'Remove', 'Remove selected vertices from mask.'),
-                 ('invert', 'Invert', 'Invert mask')],
-        default = 'add',
-        options = {'HIDDEN', 'SKIP_SAVE'})
+        name='Action',
+        items=[('add', 'Add', 'Add selected vertices to mask.'),
+               ('remove', 'Remove', 'Remove selected vertices from mask.'),
+               ('invert', 'Invert', 'Invert mask')],
+        default='add',
+        options={'HIDDEN', 'SKIP_SAVE'})
 
     def invoke(self, context, event):
         mesh = context.active_object
         self.save_vg(context)
 
-        if event.shift: self.action = 'remove'
-        elif event.ctrl: self.action = 'invert'
+        if event.shift:
+            self.action = 'remove'
+        elif event.ctrl:
+            self.action = 'invert'
 
         vg = mesh.vertex_groups.get(self.MASK_NAME)
         if not vg:
@@ -272,6 +281,7 @@ class ADH_MaskSelectedVertices(Operator, ADH_AbstractMaskOperator):
 
         return {'FINISHED'}
 
+
 class ADH_CopyCustomShapes(Operator):
     """Copies custom shapes from one armature to another (on bones with similar name)."""
     bl_idname = 'armature.adh_copy_shapes'
@@ -292,25 +302,26 @@ class ADH_CopyCustomShapes(Operator):
         for bone in src_armature.pose.bones:
             for armature in dst_armatures:
                 try:
-                    armature.pose.bones[bone.name].custom_shape =\
+                    armature.pose.bones[bone.name].custom_shape = \
                         bone.custom_shape
                 except:
                     pass
 
         return {'FINISHED'}
 
+
 class ADH_UseSameCustomShape(Operator):
     """Copies active pose bone's custom shape to each selected pose bone."""
     bl_idname = 'armature.adh_use_same_shape'
     bl_label = 'Use Same Custom Shape'
     bl_options = {'REGISTER', 'UNDO'}
-    
+
     @classmethod
-    def poll(self, context):
-        return context.active_pose_bone != None
+    def poll(cls, context):
+        return context.active_pose_bone is not None
 
     def execute(self, context):
-        if context.active_pose_bone == None:
+        if None == context.active_pose_bone:
             return {'CANCELLED'}
 
         custom_shape = context.active_pose_bone.custom_shape
@@ -324,6 +335,7 @@ class ADH_UseSameCustomShape(Operator):
 
         return {'FINISHED'}
 
+
 class ADH_CreateCustomShape(Operator):
     """Creates mesh for custom shape for selected bones, at active bone's position, using its name as suffix."""
     bl_idname = 'armature.adh_create_shape'
@@ -331,60 +343,60 @@ class ADH_CreateCustomShape(Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     widget_shape = EnumProperty(
-        name = 'Shape',
-        items = [('sphere', 'Sphere', '8x4 edges'),
-                 ('ring', 'Ring', '24 vertices'),
-                 ('square', 'Square', ''),
-                 ('triangle', 'Triangle', ''),
-                 ('bidirection', 'Bidirection', ''),
-                 ('box', 'Box', ''),
-                 ('fourways', 'Four-Ways', 'Circle with arrows to four directions - 40 vertices'),
-                 ('fourgaps', 'Four-Gaps', 'Broken circle that complements Four-Ways - 20 vertices'),
-                 ('selected', 'Selected', 'Shape of selected object')])
+        name='Shape',
+        items=[('sphere', 'Sphere', '8x4 edges'),
+               ('ring', 'Ring', '24 vertices'),
+               ('square', 'Square', ''),
+               ('triangle', 'Triangle', ''),
+               ('bidirection', 'Bidirection', ''),
+               ('box', 'Box', ''),
+               ('fourways', 'Four-Ways', 'Circle with arrows to four directions - 40 vertices'),
+               ('fourgaps', 'Four-Gaps', 'Broken circle that complements Four-Ways - 20 vertices'),
+               ('selected', 'Selected', 'Shape of selected object')])
 
     widget_size = FloatProperty(
-        name = 'Size',
-        default = 1.0,
-        min = 0,
-        max = 2,
-        step = 10,
-        description = "Widget's scale as relative to bone.")
+        name='Size',
+        default=1.0,
+        min=0,
+        max=2,
+        step=10,
+        description="Widget's scale as relative to bone.")
 
     widget_pos = FloatProperty(
-        name = 'Position',
-        default = 0.5,
-        min = -.5,
-        max = 1.5,
-        step = 5,
-        precision = 1,
-        description = "Widget's position along bone's length. 0.0 = base, 1.0 = tip.")
+        name='Position',
+        default=0.5,
+        min=-.5,
+        max=1.5,
+        step=5,
+        precision=1,
+        description="Widget's position along bone's length. 0.0 = base, 1.0 = tip.")
 
     widget_rot = FloatProperty(
-        name = 'Rotation',
-        default = 0,
-        min = -90,
-        max = 90,
-        step = 10,
-        precision = 1,
-        description = "Widget's rotation along bone's X axis.")
+        name='Rotation',
+        default=0,
+        min=-90,
+        max=90,
+        step=10,
+        precision=1,
+        description="Widget's rotation along bone's X axis.")
 
     widget_prefix = StringProperty(
-        name = 'Prefix',
-        description = "Prefix for the new widget's name",
-        default = 'WGT-')
+        name='Prefix',
+        description="Prefix for the new widget's name",
+        default='WGT-')
 
     widget_layers = BoolVectorProperty(
-        name = "Layers",
-        description = "Object layers where new widgets will be placed",
-        subtype = 'LAYER',
-        size = 20,
-        default = [x == 19 for x in range(0, 20)],
-        )
+        name="Layers",
+        description="Object layers where new widgets will be placed",
+        subtype='LAYER',
+        size=20,
+        default=[x == 19 for x in range(0, 20)],
+    )
 
     @classmethod
-    def poll(self, context):
-        return context.mode == 'POSE'\
-            and context.active_pose_bone != None
+    def poll(cls, context):
+        return context.mode == 'POSE' \
+               and context.active_pose_bone is not None
 
     def draw(self, context):
         layout = self.layout
@@ -416,7 +428,7 @@ class ADH_CreateCustomShape(Operator):
 
         if obj_name in scene.objects:
             obj = scene.objects[obj_name]
-            obj.data = mesh
+            obj.data = widget_data
         else:
             obj = bpy.data.objects.new(obj_name, widget_data)
             obj.layers = self.widget_layers
@@ -447,15 +459,43 @@ class ADH_CreateCustomShape(Operator):
 
         return obj
 
-
-
-# --------------- Long, boring widget creation functions ---------------
+    # --------------- Long, boring widget creation functions ---------------
 
     def create_sphere_widget(self, rig, bone_name, size=1.0, pos=1.0, rot=0.0, bone_transform_name=None):
         obj = self.create_widget(rig, bone_name, bone_transform_name)
         if obj != None:
-            verts = [(-0.3535533845424652*size, -0.3535533845424652*size, 2.9802322387695312e-08*size), (-0.5*size, 2.1855694143368964e-08*size, -1.7763568394002505e-15*size), (-0.3535533845424652*size, 0.3535533845424652*size, -2.9802322387695312e-08*size), (4.371138828673793e-08*size, 0.5*size, -2.9802322387695312e-08*size), (-0.24999994039535522*size, -0.3535533845424652*size, 0.2500000596046448*size), (-0.3535533845424652*size, 5.960464477539063e-08*size, 0.35355344414711*size), (-0.24999994039535522*size, 0.3535534143447876*size, 0.2500000298023224*size), (7.968597515173315e-08*size, -0.3535534143447876*size, 0.35355344414711*size), (8.585823962903305e-08*size, 5.960464477539063e-08*size, 0.5000001192092896*size), (7.968597515173315e-08*size, 0.3535534143447876*size, 0.3535533845424652*size), (0.25000008940696716*size, -0.3535533547401428*size, 0.25*size), (0.35355350375175476*size, 5.960464477539063e-08*size, 0.3535533845424652*size), (0.25000008940696716*size, 0.3535534143447876*size, 0.2499999701976776*size), (0.3535534739494324*size, -0.3535534143447876*size, -2.9802322387695312e-08*size), (0.5000001192092896*size, 2.9802315282267955e-08*size, -8.429370268459024e-08*size), (0.3535534739494324*size, 0.3535533845424652*size, -8.940696716308594e-08*size), (0.2500000298023224*size, -0.35355344414711*size, -0.2500000596046448*size), (0.3535533845424652*size, 0.0*size, -0.35355350375175476*size), (0.2500000298023224*size, 0.35355332493782043*size, -0.25000011920928955*size), (-4.494675920341251e-08*size, -0.35355344414711*size, -0.3535534143447876*size), (-8.27291728455748e-08*size, 0.0*size, -0.5*size), (-4.494675920341251e-08*size, 0.3535533845424652*size, -0.3535534739494324*size), (1.2802747306750462e-08*size, -0.5*size, 0.0*size), (-0.25000008940696716*size, -0.35355344414711*size, -0.24999994039535522*size), (-0.35355350375175476*size, 0.0*size, -0.35355332493782043*size), (-0.25000008940696716*size, 0.35355332493782043*size, -0.25*size), ]
-            edges = [(0, 1), (1, 2), (2, 3), (4, 5), (5, 6), (2, 6), (0, 4), (5, 1), (7, 8), (8, 9), (6, 9), (5, 8), (7, 4), (10, 11), (11, 12), (9, 12), (10, 7), (11, 8), (13, 14), (14, 15), (12, 15), (13, 10), (14, 11), (16, 17), (17, 18), (15, 18), (16, 13), (17, 14), (19, 20), (20, 21), (18, 21), (16, 19), (20, 17), (22, 23), (23, 24), (24, 25), (21, 25), (20, 24), (23, 19), (22, 0), (22, 4), (6, 3), (22, 7), (9, 3), (22, 10), (12, 3), (22, 13), (15, 3), (22, 16), (18, 3), (22, 19), (21, 3), (25, 3), (25, 2), (0, 23), (1, 24), ]
+            verts = [(-0.3535533845424652 * size, -0.3535533845424652 * size, 2.9802322387695312e-08 * size),
+                     (-0.5 * size, 2.1855694143368964e-08 * size, -1.7763568394002505e-15 * size),
+                     (-0.3535533845424652 * size, 0.3535533845424652 * size, -2.9802322387695312e-08 * size),
+                     (4.371138828673793e-08 * size, 0.5 * size, -2.9802322387695312e-08 * size),
+                     (-0.24999994039535522 * size, -0.3535533845424652 * size, 0.2500000596046448 * size),
+                     (-0.3535533845424652 * size, 5.960464477539063e-08 * size, 0.35355344414711 * size),
+                     (-0.24999994039535522 * size, 0.3535534143447876 * size, 0.2500000298023224 * size),
+                     (7.968597515173315e-08 * size, -0.3535534143447876 * size, 0.35355344414711 * size),
+                     (8.585823962903305e-08 * size, 5.960464477539063e-08 * size, 0.5000001192092896 * size),
+                     (7.968597515173315e-08 * size, 0.3535534143447876 * size, 0.3535533845424652 * size),
+                     (0.25000008940696716 * size, -0.3535533547401428 * size, 0.25 * size),
+                     (0.35355350375175476 * size, 5.960464477539063e-08 * size, 0.3535533845424652 * size),
+                     (0.25000008940696716 * size, 0.3535534143447876 * size, 0.2499999701976776 * size),
+                     (0.3535534739494324 * size, -0.3535534143447876 * size, -2.9802322387695312e-08 * size),
+                     (0.5000001192092896 * size, 2.9802315282267955e-08 * size, -8.429370268459024e-08 * size),
+                     (0.3535534739494324 * size, 0.3535533845424652 * size, -8.940696716308594e-08 * size),
+                     (0.2500000298023224 * size, -0.35355344414711 * size, -0.2500000596046448 * size),
+                     (0.3535533845424652 * size, 0.0 * size, -0.35355350375175476 * size),
+                     (0.2500000298023224 * size, 0.35355332493782043 * size, -0.25000011920928955 * size),
+                     (-4.494675920341251e-08 * size, -0.35355344414711 * size, -0.3535534143447876 * size),
+                     (-8.27291728455748e-08 * size, 0.0 * size, -0.5 * size),
+                     (-4.494675920341251e-08 * size, 0.3535533845424652 * size, -0.3535534739494324 * size),
+                     (1.2802747306750462e-08 * size, -0.5 * size, 0.0 * size),
+                     (-0.25000008940696716 * size, -0.35355344414711 * size, -0.24999994039535522 * size),
+                     (-0.35355350375175476 * size, 0.0 * size, -0.35355332493782043 * size),
+                     (-0.25000008940696716 * size, 0.35355332493782043 * size, -0.25 * size), ]
+            edges = [(0, 1), (1, 2), (2, 3), (4, 5), (5, 6), (2, 6), (0, 4), (5, 1), (7, 8), (8, 9), (6, 9), (5, 8),
+                     (7, 4), (10, 11), (11, 12), (9, 12), (10, 7), (11, 8), (13, 14), (14, 15), (12, 15), (13, 10),
+                     (14, 11), (16, 17), (17, 18), (15, 18), (16, 13), (17, 14), (19, 20), (20, 21), (18, 21), (16, 19),
+                     (20, 17), (22, 23), (23, 24), (24, 25), (21, 25), (20, 24), (23, 19), (22, 0), (22, 4), (6, 3),
+                     (22, 7), (9, 3), (22, 10), (12, 3), (22, 13), (15, 3), (22, 16), (18, 3), (22, 19), (21, 3),
+                     (25, 3), (25, 2), (0, 23), (1, 24), ]
             faces = []
             rot_mat = Matrix.Rotation(math.radians(rot), 4, 'X')
             trans_mat = Matrix.Translation(Vector((0.0, pos, 0.0)))
@@ -473,9 +513,34 @@ class ADH_CreateCustomShape(Operator):
     def create_ring_widget(self, rig, bone_name, size=1.0, pos=1.0, rot=0.0, bone_transform_name=None):
         obj = self.create_widget(rig, bone_name, bone_transform_name)
         if obj != None:
-            
-            verts = [(0.0*size, 2.9802322387695312e-08*size, 0.5*size), (-0.129409521818161*size, 2.9802322387695312e-08*size, 0.4829629063606262*size), (-0.25*size, 2.9802322387695312e-08*size, 0.4330126941204071*size), (-0.3535533845424652*size, 2.9802322387695312e-08*size, 0.3535533845424652*size), (-0.4330127239227295*size, 1.4901161193847656e-08*size, 0.2499999850988388*size), (-0.4829629063606262*size, 1.4901161193847656e-08*size, 0.1294095367193222*size), (-0.5*size, 3.552713678800501e-15*size, 3.774895063202166e-08*size), (-0.4829629361629486*size, -1.4901161193847656e-08*size, -0.12940946221351624*size), (-0.4330127537250519*size, -1.4901161193847656e-08*size, -0.24999992549419403*size), (-0.3535534739494324*size, -2.9802322387695312e-08*size, -0.35355329513549805*size), (-0.25000011920928955*size, -2.9802322387695312e-08*size, -0.43301263451576233*size), (-0.12940968573093414*size, -2.9802322387695312e-08*size, -0.48296287655830383*size), (-1.9470718370939721e-07*size, -2.9802322387695312e-08*size, -0.5*size), (0.1294093132019043*size, -2.9802322387695312e-08*size, -0.482962965965271*size), (0.2499997913837433*size, -2.9802322387695312e-08*size, -0.43301281332969666*size), (0.3535532057285309*size, -2.9802322387695312e-08*size, -0.3535535931587219*size), (0.43301260471343994*size, -2.9802322387695312e-08*size, -0.25000014901161194*size), (0.48296284675598145*size, -1.4901161193847656e-08*size, -0.12940971553325653*size), (0.5*size, -1.4210854715202004e-14*size, -2.324561449995599e-07*size), (0.482962965965271*size, 1.4901161193847656e-08*size, 0.12940926849842072*size), (0.43301284313201904*size, 1.4901161193847656e-08*size, 0.2499997466802597*size), (0.3535536229610443*size, 2.9802322387695312e-08*size, 0.3535531759262085*size), (0.2500002980232239*size, 2.9802322387695312e-08*size, 0.43301254510879517*size), (0.12940987944602966*size, 2.9802322387695312e-08*size, 0.48296281695365906*size), ]
-            edges = [(1, 0), (2, 1), (3, 2), (4, 3), (5, 4), (6, 5), (7, 6), (8, 7), (9, 8), (10, 9), (11, 10), (12, 11), (13, 12), (14, 13), (15, 14), (16, 15), (17, 16), (18, 17), (19, 18), (20, 19), (21, 20), (22, 21), (23, 22), (0, 23), ]
+
+            verts = [(0.0 * size, 2.9802322387695312e-08 * size, 0.5 * size),
+                     (-0.129409521818161 * size, 2.9802322387695312e-08 * size, 0.4829629063606262 * size),
+                     (-0.25 * size, 2.9802322387695312e-08 * size, 0.4330126941204071 * size),
+                     (-0.3535533845424652 * size, 2.9802322387695312e-08 * size, 0.3535533845424652 * size),
+                     (-0.4330127239227295 * size, 1.4901161193847656e-08 * size, 0.2499999850988388 * size),
+                     (-0.4829629063606262 * size, 1.4901161193847656e-08 * size, 0.1294095367193222 * size),
+                     (-0.5 * size, 3.552713678800501e-15 * size, 3.774895063202166e-08 * size),
+                     (-0.4829629361629486 * size, -1.4901161193847656e-08 * size, -0.12940946221351624 * size),
+                     (-0.4330127537250519 * size, -1.4901161193847656e-08 * size, -0.24999992549419403 * size),
+                     (-0.3535534739494324 * size, -2.9802322387695312e-08 * size, -0.35355329513549805 * size),
+                     (-0.25000011920928955 * size, -2.9802322387695312e-08 * size, -0.43301263451576233 * size),
+                     (-0.12940968573093414 * size, -2.9802322387695312e-08 * size, -0.48296287655830383 * size),
+                     (-1.9470718370939721e-07 * size, -2.9802322387695312e-08 * size, -0.5 * size),
+                     (0.1294093132019043 * size, -2.9802322387695312e-08 * size, -0.482962965965271 * size),
+                     (0.2499997913837433 * size, -2.9802322387695312e-08 * size, -0.43301281332969666 * size),
+                     (0.3535532057285309 * size, -2.9802322387695312e-08 * size, -0.3535535931587219 * size),
+                     (0.43301260471343994 * size, -2.9802322387695312e-08 * size, -0.25000014901161194 * size),
+                     (0.48296284675598145 * size, -1.4901161193847656e-08 * size, -0.12940971553325653 * size),
+                     (0.5 * size, -1.4210854715202004e-14 * size, -2.324561449995599e-07 * size),
+                     (0.482962965965271 * size, 1.4901161193847656e-08 * size, 0.12940926849842072 * size),
+                     (0.43301284313201904 * size, 1.4901161193847656e-08 * size, 0.2499997466802597 * size),
+                     (0.3535536229610443 * size, 2.9802322387695312e-08 * size, 0.3535531759262085 * size),
+                     (0.2500002980232239 * size, 2.9802322387695312e-08 * size, 0.43301254510879517 * size),
+                     (0.12940987944602966 * size, 2.9802322387695312e-08 * size, 0.48296281695365906 * size), ]
+            edges = [(1, 0), (2, 1), (3, 2), (4, 3), (5, 4), (6, 5), (7, 6), (8, 7), (9, 8), (10, 9), (11, 10),
+                     (12, 11), (13, 12), (14, 13), (15, 14), (16, 15), (17, 16), (18, 17), (19, 18), (20, 19), (21, 20),
+                     (22, 21), (23, 22), (0, 23), ]
             faces = []
             rot_mat = Matrix.Rotation(math.radians(rot), 4, 'X')
             trans_mat = Matrix.Translation(Vector((0.0, pos, 0.0)))
@@ -493,7 +558,8 @@ class ADH_CreateCustomShape(Operator):
     def create_square_widget(self, rig, bone_name, size=1.0, pos=1.0, rot=0.0, bone_transform_name=None):
         obj = self.create_widget(rig, bone_name, bone_transform_name)
         if obj != None:
-            verts = [(0.5*size, -0.5*size, 0.0*size), (-0.5*size, -0.5*size, 0.0*size), (0.5*size, 0.5*size, 0.0*size), (-0.5*size, 0.5*size, 0.0*size), ]
+            verts = [(0.5 * size, -0.5 * size, 0.0 * size), (-0.5 * size, -0.5 * size, 0.0 * size),
+                     (0.5 * size, 0.5 * size, 0.0 * size), (-0.5 * size, 0.5 * size, 0.0 * size), ]
             edges = [(0, 1), (2, 3), (0, 2), (3, 1), ]
             faces = []
             rot_mat = Matrix.Rotation(math.radians(rot), 4, 'X')
@@ -511,8 +577,8 @@ class ADH_CreateCustomShape(Operator):
 
     def create_triangle_widget(self, rig, bone_name, size=1.0, pos=1.0, rot=0.0, bone_transform_name=None):
         obj = self.create_widget(rig, bone_name, bone_transform_name)
-        if obj != None:
-            verts = [(0.0*size, 0.0*size, 0.0), (0.6*size, 1.0*size, 0.0), (-0.6*size, 1.0*size, 0.0), ]
+        if obj is not None:
+            verts = [(0.0 * size, 0.0 * size, 0.0), (0.6 * size, 1.0 * size, 0.0), (-0.6 * size, 1.0 * size, 0.0), ]
             edges = [(1, 2), (0, 1), (2, 0), ]
             faces = []
             rot_mat = Matrix.Rotation(math.radians(rot), 4, 'X')
@@ -531,7 +597,11 @@ class ADH_CreateCustomShape(Operator):
     def create_bidirection_widget(self, rig, bone_name, size=1.0, pos=1.0, rot=0.0, bone_transform_name=None):
         obj = self.create_widget(rig, bone_name, bone_transform_name)
         if obj != None:
-            verts = [(0.0*size, -0.5*size, 0.0*size), (0.0*size, 0.5*size, 0.0*size), (0.15000000596046448*size, -0.3499999940395355*size, 0.0*size), (-0.15000000596046448*size, 0.3499999940395355*size, 0.0*size), (0.15000000596046448*size, 0.3499999940395355*size, 0.0*size), (-0.15000000596046448*size, -0.3499999940395355*size, 0.0*size), ]
+            verts = [(0.0 * size, -0.5 * size, 0.0 * size), (0.0 * size, 0.5 * size, 0.0 * size),
+                     (0.15000000596046448 * size, -0.3499999940395355 * size, 0.0 * size),
+                     (-0.15000000596046448 * size, 0.3499999940395355 * size, 0.0 * size),
+                     (0.15000000596046448 * size, 0.3499999940395355 * size, 0.0 * size),
+                     (-0.15000000596046448 * size, -0.3499999940395355 * size, 0.0 * size), ]
             edges = [(2, 0), (4, 1), (5, 0), (3, 1), (0, 1), ]
             faces = []
             rot_mat = Matrix.Rotation(math.radians(rot), 4, 'X')
@@ -550,13 +620,15 @@ class ADH_CreateCustomShape(Operator):
     def create_box_widget(self, rig, bone_name, size=1.0, pos=1.0, rot=0.0, bone_transform_name=None):
         obj = self.create_widget(rig, bone_name, bone_transform_name)
         if obj != None:
-            verts = [(-0.5*size, -0.5, -0.5*size), (-0.5*size, 0.5, -0.5*size), (0.5*size, 0.5, -0.5*size), (0.5*size, -0.5, -0.5*size), (-0.5*size, -0.5, 0.5*size), (-0.5*size, 0.5, 0.5*size), (0.5*size, 0.5, 0.5*size), (0.5*size, -0.5, 0.5*size), ]
+            verts = [(-0.5 * size, -0.5, -0.5 * size), (-0.5 * size, 0.5, -0.5 * size), (0.5 * size, 0.5, -0.5 * size),
+                     (0.5 * size, -0.5, -0.5 * size), (-0.5 * size, -0.5, 0.5 * size), (-0.5 * size, 0.5, 0.5 * size),
+                     (0.5 * size, 0.5, 0.5 * size), (0.5 * size, -0.5, 0.5 * size), ]
             edges = [(4, 5), (5, 1), (1, 0), (0, 4), (5, 6), (6, 2), (2, 1), (6, 7), (7, 3), (3, 2), (7, 4), (0, 3), ]
             faces = []
             rot_mat = Matrix.Rotation(math.radians(rot), 4, 'X')
             trans_mat = Matrix.Translation(Vector((0.0, pos, 0.0)))
             mat = trans_mat * rot_mat
-            
+
             mesh = obj.data
             mesh.from_pydata(verts, edges, faces)
             mesh.transform(mat)
@@ -569,13 +641,55 @@ class ADH_CreateCustomShape(Operator):
     def create_fourways_widget(self, rig, bone_name, size=1.0, pos=1.0, rot=0.0, bone_transform_name=None):
         obj = self.create_widget(rig, bone_name, bone_transform_name)
         if obj != None:
-            verts = [(0.5829628705978394*size, -1.4901161193847656e-08, 0.12940971553325653*size), (-0.129409521818161*size, 2.9802322387695312e-08, -0.4829629063606262*size), (-0.25*size, 2.9802322387695312e-08, -0.4330126941204071*size), (-0.3535533845424652*size, 2.9802322387695312e-08, -0.3535533845424652*size), (-0.4330127239227295*size, 1.4901161193847656e-08, -0.2499999850988388*size), (-0.4829629063606262*size, 1.4901161193847656e-08, -0.1294095367193222*size), (0.5829629898071289*size, 1.4901161193847656e-08, -0.12940926849842072*size), (-0.4829629361629486*size, -1.4901161193847656e-08, 0.12940946221351624*size), (-0.4330127537250519*size, -1.4901161193847656e-08, 0.24999992549419403*size), (-0.3535534739494324*size, -2.9802322387695312e-08, 0.35355329513549805*size), (-0.25000011920928955*size, -2.9802322387695312e-08, 0.43301263451576233*size), (-0.12940968573093414*size, -2.9802322387695312e-08, 0.48296287655830383*size), (-0.12940968573093414*size, -2.9802322387695312e-08, 0.5829628705978394*size), (0.1294093132019043*size, -2.9802322387695312e-08, 0.482962965965271*size), (0.2499997913837433*size, -2.9802322387695312e-08, 0.43301281332969666*size), (0.3535532057285309*size, -2.9802322387695312e-08, 0.3535535931587219*size), (0.43301260471343994*size, -2.9802322387695312e-08, 0.25000014901161194*size), (0.48296284675598145*size, -1.4901161193847656e-08, 0.12940971553325653*size), (0.1294093132019043*size, -2.9802322387695312e-08, 0.5829629898071289*size), (0.482962965965271*size, 1.4901161193847656e-08, -0.12940926849842072*size), (0.43301284313201904*size, 1.4901161193847656e-08, -0.2499997466802597*size), (0.3535536229610443*size, 2.9802322387695312e-08, -0.3535531759262085*size), (0.2500002980232239*size, 2.9802322387695312e-08, -0.43301254510879517*size), (0.12940987944602966*size, 2.9802322387695312e-08, -0.48296281695365906*size), (-0.1941145956516266*size, -2.9802322387695312e-08, 0.5829629898071289*size), (-2.102837726170037e-07*size, -3.218650945768786e-08, 0.7560000419616699*size), (0.19411394000053406*size, -2.9802322387695312e-08, 0.5829629898071289*size), (0.5829628705978394*size, -1.4901161193847656e-08, 0.1941145360469818*size), (0.7560000419616699*size, -1.5347723702281886e-14, 2.5105265422098455e-07*size), (0.5829629898071289*size, 1.4901161193847656e-08, -0.19411394000053406*size), (-0.5829628705978394*size, 1.4901161193847656e-08, -0.19411435723304749*size), (-0.7560000419616699*size, 3.8369309255704715e-15, -4.076887094583981e-08*size), (-0.5829629302024841*size, -1.4901161193847656e-08, 0.19411414861679077*size), (0.0*size, 3.218650945768786e-08, -0.7560000419616699*size), (-0.1941143274307251*size, 2.9802322387695312e-08, -0.5829628109931946*size), (0.1941147744655609*size, 2.9802322387695312e-08, -0.5829628109931946*size), (-0.5829629302024841*size, -1.4901161193847656e-08, 0.12940946221351624*size), (-0.5829628705978394*size, 1.4901161193847656e-08, -0.1294095367193222*size), (0.12940987944602966*size, 2.9802322387695312e-08, -0.5829628109931946*size), (-0.129409521818161*size, 2.9802322387695312e-08, -0.5829628705978394*size), ]
-            edges = [(2, 1), (3, 2), (4, 3), (5, 4), (8, 7), (9, 8), (10, 9), (11, 10), (39, 34), (14, 13), (15, 14), (16, 15), (17, 16), (38, 23), (37, 5), (20, 19), (21, 20), (22, 21), (23, 22), (36, 32), (25, 24), (26, 25), (0, 17), (18, 13), (12, 24), (28, 27), (29, 28), (6, 29), (6, 19), (0, 27), (31, 30), (32, 31), (12, 11), (36, 7), (37, 30), (34, 33), (33, 35), (38, 35), (18, 26), (39, 1), ]
+            verts = [(0.5829628705978394 * size, -1.4901161193847656e-08, 0.12940971553325653 * size),
+                     (-0.129409521818161 * size, 2.9802322387695312e-08, -0.4829629063606262 * size),
+                     (-0.25 * size, 2.9802322387695312e-08, -0.4330126941204071 * size),
+                     (-0.3535533845424652 * size, 2.9802322387695312e-08, -0.3535533845424652 * size),
+                     (-0.4330127239227295 * size, 1.4901161193847656e-08, -0.2499999850988388 * size),
+                     (-0.4829629063606262 * size, 1.4901161193847656e-08, -0.1294095367193222 * size),
+                     (0.5829629898071289 * size, 1.4901161193847656e-08, -0.12940926849842072 * size),
+                     (-0.4829629361629486 * size, -1.4901161193847656e-08, 0.12940946221351624 * size),
+                     (-0.4330127537250519 * size, -1.4901161193847656e-08, 0.24999992549419403 * size),
+                     (-0.3535534739494324 * size, -2.9802322387695312e-08, 0.35355329513549805 * size),
+                     (-0.25000011920928955 * size, -2.9802322387695312e-08, 0.43301263451576233 * size),
+                     (-0.12940968573093414 * size, -2.9802322387695312e-08, 0.48296287655830383 * size),
+                     (-0.12940968573093414 * size, -2.9802322387695312e-08, 0.5829628705978394 * size),
+                     (0.1294093132019043 * size, -2.9802322387695312e-08, 0.482962965965271 * size),
+                     (0.2499997913837433 * size, -2.9802322387695312e-08, 0.43301281332969666 * size),
+                     (0.3535532057285309 * size, -2.9802322387695312e-08, 0.3535535931587219 * size),
+                     (0.43301260471343994 * size, -2.9802322387695312e-08, 0.25000014901161194 * size),
+                     (0.48296284675598145 * size, -1.4901161193847656e-08, 0.12940971553325653 * size),
+                     (0.1294093132019043 * size, -2.9802322387695312e-08, 0.5829629898071289 * size),
+                     (0.482962965965271 * size, 1.4901161193847656e-08, -0.12940926849842072 * size),
+                     (0.43301284313201904 * size, 1.4901161193847656e-08, -0.2499997466802597 * size),
+                     (0.3535536229610443 * size, 2.9802322387695312e-08, -0.3535531759262085 * size),
+                     (0.2500002980232239 * size, 2.9802322387695312e-08, -0.43301254510879517 * size),
+                     (0.12940987944602966 * size, 2.9802322387695312e-08, -0.48296281695365906 * size),
+                     (-0.1941145956516266 * size, -2.9802322387695312e-08, 0.5829629898071289 * size),
+                     (-2.102837726170037e-07 * size, -3.218650945768786e-08, 0.7560000419616699 * size),
+                     (0.19411394000053406 * size, -2.9802322387695312e-08, 0.5829629898071289 * size),
+                     (0.5829628705978394 * size, -1.4901161193847656e-08, 0.1941145360469818 * size),
+                     (0.7560000419616699 * size, -1.5347723702281886e-14, 2.5105265422098455e-07 * size),
+                     (0.5829629898071289 * size, 1.4901161193847656e-08, -0.19411394000053406 * size),
+                     (-0.5829628705978394 * size, 1.4901161193847656e-08, -0.19411435723304749 * size),
+                     (-0.7560000419616699 * size, 3.8369309255704715e-15, -4.076887094583981e-08 * size),
+                     (-0.5829629302024841 * size, -1.4901161193847656e-08, 0.19411414861679077 * size),
+                     (0.0 * size, 3.218650945768786e-08, -0.7560000419616699 * size),
+                     (-0.1941143274307251 * size, 2.9802322387695312e-08, -0.5829628109931946 * size),
+                     (0.1941147744655609 * size, 2.9802322387695312e-08, -0.5829628109931946 * size),
+                     (-0.5829629302024841 * size, -1.4901161193847656e-08, 0.12940946221351624 * size),
+                     (-0.5829628705978394 * size, 1.4901161193847656e-08, -0.1294095367193222 * size),
+                     (0.12940987944602966 * size, 2.9802322387695312e-08, -0.5829628109931946 * size),
+                     (-0.129409521818161 * size, 2.9802322387695312e-08, -0.5829628705978394 * size), ]
+            edges = [(2, 1), (3, 2), (4, 3), (5, 4), (8, 7), (9, 8), (10, 9), (11, 10), (39, 34), (14, 13), (15, 14),
+                     (16, 15), (17, 16), (38, 23), (37, 5), (20, 19), (21, 20), (22, 21), (23, 22), (36, 32), (25, 24),
+                     (26, 25), (0, 17), (18, 13), (12, 24), (28, 27), (29, 28), (6, 29), (6, 19), (0, 27), (31, 30),
+                     (32, 31), (12, 11), (36, 7), (37, 30), (34, 33), (33, 35), (38, 35), (18, 26), (39, 1), ]
             faces = []
             rot_mat = Matrix.Rotation(math.radians(rot), 4, 'X')
             trans_mat = Matrix.Translation(Vector((0.0, pos, 0.0)))
             mat = trans_mat * rot_mat
-            
+
             mesh = obj.data
             mesh.from_pydata(verts, edges, faces)
             mesh.transform(mat)
@@ -588,13 +702,33 @@ class ADH_CreateCustomShape(Operator):
     def create_fourgaps_widget(self, rig, bone_name, size=1.0, pos=1.0, rot=0.0, bone_transform_name=None):
         obj = self.create_widget(rig, bone_name, bone_transform_name)
         if obj != None:
-            verts = [(-0.1941143274307251*size, 2.9802322387695312e-08, -0.5829628109931946*size), (-0.30721572041511536*size, 3.6622967769517345e-08, -0.532113254070282*size), (-0.4344686269760132*size, 3.6622967769517345e-08, -0.4344686269760132*size), (-0.532113254070282*size, 1.8311483884758673e-08, -0.30721569061279297*size), (-0.5829628705978394*size, 1.4901161193847656e-08, -0.19411435723304749*size), (-0.5829629302024841*size, -1.4901161193847656e-08, 0.19411414861679077*size), (-0.5321133136749268*size, -1.8311483884758673e-08, 0.3072156310081482*size), (-0.43446874618530273*size, -3.6622967769517345e-08, 0.43446850776672363*size), (-0.3072158396244049*size, -3.6622967769517345e-08, 0.5321131348609924*size), (-0.1941145956516266*size, -2.9802322387695312e-08, 0.5829629898071289*size), (0.19411394000053406*size, -2.9802322387695312e-08, 0.5829629898071289*size), (0.30721548199653625*size, -3.6622967769517345e-08, 0.5321133732795715*size), (0.4344683885574341*size, -3.6622967769517345e-08, 0.4344688653945923*size), (0.5321131348609924*size, -3.6622967769517345e-08, 0.3072158992290497*size), (0.5829628705978394*size, -1.4901161193847656e-08, 0.1941145360469818*size), (0.5829629898071289*size, 1.4901161193847656e-08, -0.19411394000053406*size), (0.5321133732795715*size, 1.8311483884758673e-08, -0.3072154223918915*size), (0.43446895480155945*size, 3.6622967769517345e-08, -0.4344683885574341*size), (0.307216078042984*size, 3.6622967769517345e-08, -0.5321130156517029*size), (0.1941147744655609*size, 2.9802322387695312e-08, -0.5829628109931946*size), ]
-            edges = [(1, 0), (2, 1), (3, 2), (4, 3), (6, 5), (7, 6), (8, 7), (9, 8), (11, 10), (12, 11), (13, 12), (14, 13), (16, 15), (17, 16), (18, 17), (19, 18), ]
+            verts = [(-0.1941143274307251 * size, 2.9802322387695312e-08, -0.5829628109931946 * size),
+                     (-0.30721572041511536 * size, 3.6622967769517345e-08, -0.532113254070282 * size),
+                     (-0.4344686269760132 * size, 3.6622967769517345e-08, -0.4344686269760132 * size),
+                     (-0.532113254070282 * size, 1.8311483884758673e-08, -0.30721569061279297 * size),
+                     (-0.5829628705978394 * size, 1.4901161193847656e-08, -0.19411435723304749 * size),
+                     (-0.5829629302024841 * size, -1.4901161193847656e-08, 0.19411414861679077 * size),
+                     (-0.5321133136749268 * size, -1.8311483884758673e-08, 0.3072156310081482 * size),
+                     (-0.43446874618530273 * size, -3.6622967769517345e-08, 0.43446850776672363 * size),
+                     (-0.3072158396244049 * size, -3.6622967769517345e-08, 0.5321131348609924 * size),
+                     (-0.1941145956516266 * size, -2.9802322387695312e-08, 0.5829629898071289 * size),
+                     (0.19411394000053406 * size, -2.9802322387695312e-08, 0.5829629898071289 * size),
+                     (0.30721548199653625 * size, -3.6622967769517345e-08, 0.5321133732795715 * size),
+                     (0.4344683885574341 * size, -3.6622967769517345e-08, 0.4344688653945923 * size),
+                     (0.5321131348609924 * size, -3.6622967769517345e-08, 0.3072158992290497 * size),
+                     (0.5829628705978394 * size, -1.4901161193847656e-08, 0.1941145360469818 * size),
+                     (0.5829629898071289 * size, 1.4901161193847656e-08, -0.19411394000053406 * size),
+                     (0.5321133732795715 * size, 1.8311483884758673e-08, -0.3072154223918915 * size),
+                     (0.43446895480155945 * size, 3.6622967769517345e-08, -0.4344683885574341 * size),
+                     (0.307216078042984 * size, 3.6622967769517345e-08, -0.5321130156517029 * size),
+                     (0.1941147744655609 * size, 2.9802322387695312e-08, -0.5829628109931946 * size), ]
+            edges = [(1, 0), (2, 1), (3, 2), (4, 3), (6, 5), (7, 6), (8, 7), (9, 8), (11, 10), (12, 11), (13, 12),
+                     (14, 13), (16, 15), (17, 16), (18, 17), (19, 18), ]
             faces = []
             rot_mat = Matrix.Rotation(math.radians(rot), 4, 'X')
             trans_mat = Matrix.Translation(Vector((0.0, pos, 0.0)))
             mat = trans_mat * rot_mat
-            
+
             mesh = obj.data
             mesh.from_pydata(verts, edges, faces)
             mesh.transform(mat)
@@ -604,9 +738,7 @@ class ADH_CreateCustomShape(Operator):
         else:
             return None
 
-
-# ------------ End of long, boring widget creation functions -----------
-
+    # ------------ End of long, boring widget creation functions -----------
 
     def execute(self, context):
         rig = context.active_object
@@ -616,7 +748,7 @@ class ADH_CreateCustomShape(Operator):
         widget = None
         widget_srcs = [obj for obj in context.selected_objects
                        if obj.type == 'MESH']
-            
+
         func = getattr(self, "create_%s_widget" % self.widget_shape, None)
         if func == None and len(widget_srcs) == 1:
             widget = self.create_widget_from_object(rig, bone, widget_srcs[0])
@@ -628,9 +760,10 @@ class ADH_CreateCustomShape(Operator):
             bone.custom_shape = widget
 
         return {'FINISHED'}
-            
+
     def invoke(self, context, event):
         return self.execute(context)
+
 
 class ADH_SelectCustomShape(Operator):
     """Selects custom shape object of active bone."""
@@ -640,13 +773,13 @@ class ADH_SelectCustomShape(Operator):
 
     @classmethod
     def poll(self, context):
-        return context.active_pose_bone != None\
-            and context.active_pose_bone.custom_shape != None
+        return context.active_pose_bone is not None and \
+               context.active_pose_bone.custom_shape is not None
 
     def execute(self, context):
         bone = context.active_pose_bone
         bone_shape = bone.custom_shape
-        shape_layers = [l for l in bone_shape.layers] # can't index on bpy_prop_array
+        shape_layers = [l for l in bone_shape.layers]  # can't index on bpy_prop_array
         if bone_shape:
             context.active_object.select = False
             bone_shape.hide = False
@@ -658,6 +791,7 @@ class ADH_SelectCustomShape(Operator):
 
         return {'FINISHED'}
 
+
 class ADH_CreateHooks(Operator):
     """Creates parentless bone for each selected bones (local copy-transformed) or lattice points."""
     bl_idname = 'armature.adh_create_hooks'
@@ -665,12 +799,12 @@ class ADH_CreateHooks(Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     hook_layers = BoolVectorProperty(
-        name = "Hook Layers",
-        description = "Armature layers where new hooks will be placed",
-        subtype = 'LAYER',
-        size = 32,
-        default = [x == 30 for x in range(0, 32)]
-        )
+        name="Hook Layers",
+        description="Armature layers where new hooks will be placed",
+        subtype='LAYER',
+        size=32,
+        default=[x == 30 for x in range(0, 32)]
+    )
 
     invoked = False
 
@@ -686,20 +820,24 @@ class ADH_CreateHooks(Operator):
         objects = context.scene.objects
 
         prev_lattice_mode = lattice.mode
-        bpy.ops.object.mode_set(mode='OBJECT') # Needed for matrix calculation
+        bpy.ops.object.mode_set(mode='OBJECT')  # Needed for matrix calculation
 
         armature_mat_inv = armature.matrix_world.inverted()
         lattice_mat = lattice.matrix_world
-        global_lat_point_co = lambda p: armature_mat_inv * (lattice_mat * p)
-        get_selected_points = lambda lat: [
-            point for point in lat.data.points if point.select]
+
+        def global_lat_point_co(p):
+            return armature_mat_inv * (lattice_mat * p)
+
+        def get_selected_points(lat):
+            return [point for point in lat.data.points if point.select]
+
         lattice_pos = get_selected_points(lattice)
         bone_pos = [global_lat_point_co(point.co) for point in lattice_pos]
         bone_names = [
             "%(prefix)s%(lat)s.%(index)d%(suffix)s" %
             dict(prefix=PRF_HOOK, lat=lattice.name, index=index,
-                 suffix=".R" if global_lat_point_co(point).x < 0\
-                 else ".L" if point.x > 0 else "")
+                 suffix=".R" if global_lat_point_co(point).x < 0 \
+                     else ".L" if point.x > 0 else "")
             for index, point in enumerate(bone_pos)]
 
         objects.active = armature
@@ -720,7 +858,7 @@ class ADH_CreateHooks(Operator):
 
         objects.active = lattice
         bpy.ops.object.mode_set(mode='EDIT')
-        selected_points = get_selected_points(lattice) # previous one lost after toggling
+        selected_points = get_selected_points(lattice)  # previous one lost after toggling
         for point in selected_points:
             point.select = False
         for index, point in enumerate(selected_points):
@@ -728,10 +866,10 @@ class ADH_CreateHooks(Operator):
             mod = lattice.modifiers.new(bone_name, 'HOOK')
             mod.object = armature
             mod.subtarget = bone_name
-            point.select=True
+            point.select = True
             bpy.ops.object.hook_assign(modifier=bone_name)
             bpy.ops.object.hook_reset(modifier=bone_name)
-            point.select=False
+            point.select = False
         for point in selected_points:
             point.select = True
         bpy.ops.object.mode_set(mode=prev_lattice_mode)
@@ -760,9 +898,9 @@ class ADH_CreateHooks(Operator):
         return {'FINISHED'}
 
     @classmethod
-    def poll(self, context):
-        return context.active_object != None\
-            and context.active_object.type in ['ARMATURE', 'LATTICE']
+    def poll(cls, context):
+        return context.active_object is not None and \
+               context.active_object.type in ['ARMATURE', 'LATTICE']
 
     def draw(self, context):
         layout = self.layout
@@ -789,6 +927,7 @@ class ADH_CreateHooks(Operator):
         self.invoked = True
         return retval
 
+
 class ADH_CreateSpokes(Operator):
     """Creates parentless bones in selected armature from the 3D cursor, ending at each selected vertices of active mesh object."""
     bl_idname = 'armature.adh_create_spokes'
@@ -796,39 +935,39 @@ class ADH_CreateSpokes(Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     parent = BoolProperty(
-        name = "Parent",
-        description = "Create parent bone, one for each if armature selected.",
-        default = False
-        )
+        name="Parent",
+        description="Create parent bone, one for each if armature selected.",
+        default=False
+    )
 
     tip = BoolProperty(
-        name = "Tracked Tip",
-        description = "Create tip bone and insert Damped Track constraint"+\
-            " with the tip as target.",
-        default = False
-        )
+        name="Tracked Tip",
+        description="Create tip bone and insert Damped Track constraint" + \
+                    " with the tip as target.",
+        default=False
+    )
 
     spoke_layers = BoolVectorProperty(
-        name = "Spoke Layers",
-        description = "Armature layers where spoke bones will be placed",
-        subtype = 'LAYER',
-        size = 32,
-        default = [x == 29 for x in range(0, 32)]
-        )
+        name="Spoke Layers",
+        description="Armature layers where spoke bones will be placed",
+        subtype='LAYER',
+        size=32,
+        default=[x == 29 for x in range(0, 32)]
+    )
 
     aux_layers = BoolVectorProperty(
-        name = "Parent and Tip Layers",
-        description = "Armature layers where spoke tip and parent bones"+\
-            " will be placed",
-        subtype = 'LAYER',
-        size = 32,
-        default = [x == 30 for x in range(0, 32)]
-        )
+        name="Parent and Tip Layers",
+        description="Armature layers where spoke tip and parent bones" + \
+                    " will be placed",
+        subtype='LAYER',
+        size=32,
+        default=[x == 30 for x in range(0, 32)]
+    )
 
     basename = StringProperty(
-        name = "Bone Name",
-        default = "spoke",
-        )
+        name="Bone Name",
+        default="spoke",
+    )
 
     invoked = False
 
@@ -902,7 +1041,7 @@ class ADH_CreateSpokes(Operator):
         armature_mat_inv = armature.matrix_world.inverted()
         mesh_mat = mesh.matrix_world
         return [armature_mat_inv * (mesh_mat * vert.co)
-                for vert in mesh.data.vertices if vert.select == True]
+                for vert in mesh.data.vertices if vert.select]
 
     def create_spokes(self, context, mesh, armature):
         scene = context.scene
@@ -955,11 +1094,11 @@ class ADH_CreateSpokes(Operator):
         return {'FINISHED'}
 
     @classmethod
-    def poll(self, context):
+    def poll(cls, context):
         active = context.active_object
-        return active != None and active.mode in ['EDIT', 'POSE']\
-            and active.type in ['MESH', 'ARMATURE']\
-            and len(context.selected_objects) <= 2
+        return active is not None and active.mode in ['EDIT', 'POSE'] and \
+               active.type in ['MESH', 'ARMATURE'] and \
+               len(context.selected_objects) <= 2
 
     def draw(self, context):
         layout = self.layout
@@ -985,7 +1124,7 @@ class ADH_CreateSpokes(Operator):
         selected = [obj for obj in context.selected_objects if obj != obj1]
         obj2 = selected[0] if selected else None
 
-        if obj1.type == 'MESH' and obj1.mode == 'EDIT'\
+        if obj1.type == 'MESH' and obj1.mode == 'EDIT' \
                 and obj2 and obj2.type == 'ARMATURE':
             return self.create_spokes(context, obj1, obj2)
         elif obj1.type == 'ARMATURE':
@@ -997,6 +1136,7 @@ class ADH_CreateSpokes(Operator):
         retval = context.window_manager.invoke_props_dialog(self)
         self.invoked = True
         return retval
+
 
 class ADH_CreateBoneGroup(Operator):
     """Creates a new bone group named after active bone, consisting of all selected bones."""
@@ -1012,8 +1152,8 @@ class ADH_CreateBoneGroup(Operator):
         return random.choice(themes)
 
     @classmethod
-    def poll(self, context):
-        return context.active_pose_bone != None
+    def poll(cls, context):
+        return context.active_pose_bone is not None
 
     def execute(self, context):
         pose = context.active_object.pose
@@ -1026,8 +1166,9 @@ class ADH_CreateBoneGroup(Operator):
             bpy.ops.pose.group_assign()
             pose.bone_groups.active.name = bone_name
         pose.bone_groups.active.color_set = self.random_theme()
-        
+
         return {'FINISHED'}
+
 
 class ADH_RemoveVertexGroupsUnselectedBones(Operator):
     """Removes all vertex groups other than selected bones.
@@ -1039,20 +1180,21 @@ class ADH_RemoveVertexGroupsUnselectedBones(Operator):
 
     @classmethod
     def poll(self, context):
-        return context.active_object != None\
-            and context.selected_pose_bones != None
+        return context.active_object != None \
+               and context.selected_pose_bones != None
 
     def execute(self, context):
         bone_names = [b.name for b in context.selected_pose_bones]
         affected_objects = [o for o in context.selected_objects
                             if o.type == 'MESH']
-        
+
         for obj in affected_objects:
             for vg in obj.vertex_groups:
                 if not (vg.name in bone_names or vg.lock_weight):
                     obj.vertex_groups.remove(vg)
 
         return {'FINISHED'}
+
 
 class ADH_BindToBone(Operator):
     """Binds all selected objects to selected bone, adding armature and vertex group if none exist yet."""
@@ -1061,21 +1203,21 @@ class ADH_BindToBone(Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     only_selected = BoolProperty(
-        name = "Only Selected",
-        description = "Bind only selected vertices.",
-        default = False,
-        options = {'SKIP_SAVE'})
+        name="Only Selected",
+        description="Bind only selected vertices.",
+        default=False,
+        options={'SKIP_SAVE'})
 
     set_as_parent = BoolProperty(
-        name = "Set as Parent",
-        description = "Also parent object to armature.",
-        default = True,
+        name="Set as Parent",
+        description="Also parent object to armature.",
+        default=True,
     )
 
     @classmethod
-    def poll(self, context):
-        return len(context.selected_objects) >= 2\
-            and context.active_pose_bone != None
+    def poll(cls, context):
+        return len(context.selected_objects) >= 2 and \
+               context.active_pose_bone is not None
 
     def execute(self, context):
         meshes = [obj for obj in context.selected_objects if obj.type == 'MESH']
@@ -1091,7 +1233,7 @@ class ADH_BindToBone(Operator):
             if self.set_as_parent:
                 mesh.parent = armature
 
-            vertex_indices = [v.index for v in mesh.data.vertices if v.select]\
+            vertex_indices = [v.index for v in mesh.data.vertices if v.select] \
                 if self.only_selected else range(len(mesh.data.vertices))
             vg = mesh.vertex_groups.get(bone.name, None)
             for other_vg in mesh.vertex_groups:
@@ -1107,6 +1249,7 @@ class ADH_BindToBone(Operator):
     def invoke(self, context, event):
         self.only_selected = event.shift
         return self.execute(context)
+
 
 class ADH_SyncObjectDataNameToObject(Operator):
     """Sync an object data's name to the object's. Made it easier to reuse object data among separate files."""
@@ -1125,6 +1268,7 @@ class ADH_SyncObjectDataNameToObject(Operator):
 
         return {'FINISHED'}
 
+
 class ADH_SyncCustomShapePositionToBone(Operator):
     """Sync a mesh object's position to each selected bone using it as a custom shape. Depends on Rigify."""
     bl_idname = 'object.adh_sync_shape_position_to_bone'
@@ -1132,11 +1276,11 @@ class ADH_SyncCustomShapePositionToBone(Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
-    def poll(self, context):
-        return context.active_object != None\
-            and context.active_object.type == 'ARMATURE'\
-            and context.mode == 'POSE'
-    
+    def poll(cls, context):
+        return context.active_object is not None \
+               and context.active_object.type == 'ARMATURE' \
+               and context.mode == 'POSE'
+
     def execute(self, context):
         for bone in context.selected_pose_bones:
             obj = bone.custom_shape
@@ -1145,6 +1289,7 @@ class ADH_SyncCustomShapePositionToBone(Operator):
                                          bone.name)
 
         return {'FINISHED'}
+
 
 class ADH_RapidPasteDriver(Operator):
     """Paste driver until Escape button is pressed."""
@@ -1161,7 +1306,7 @@ class ADH_RapidPasteDriver(Operator):
 
     def cancel(self, context):
         context.window_manager.event_timer_remove(self._timer)
-        
+
         return {'CANCELLED'}
 
     def modal(self, context, event):
@@ -1184,6 +1329,7 @@ class ADH_RapidPasteDriver(Operator):
 
         return {'RUNNING_MODAL'}
 
+
 class ADH_MapShapeKeysToBones(Operator):
     """Create driver for shape keys, driven by selected bone of the same name."""
     bl_idname = 'object.adh_map_shape_keys_to_bones'
@@ -1191,23 +1337,23 @@ class ADH_MapShapeKeysToBones(Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     slider_axis = EnumProperty(
-        name = "Slider Axis",
-        items = [("LOC_X", "X", "X axis"), ("LOC_Y", "Y", "Y axis"),
-                 ("LOC_Z", "Z", "X axis")],
-        default = "LOC_X",
+        name="Slider Axis",
+        items=[("LOC_X", "X", "X axis"), ("LOC_Y", "Y", "Y axis"),
+               ("LOC_Z", "Z", "X axis")],
+        default="LOC_X",
     )
 
     slider_distance = FloatProperty(
-        name = "Slider Distance",
-        min = -2.0, max = 2.0, default=0.2, step=0.05,
+        name="Slider Distance",
+        min=-2.0, max=2.0, default=0.2, step=0.05,
         subtype="DISTANCE", unit="LENGTH",
     )
 
     @classmethod
     def poll(self, context):
-        return context.active_object != None\
-            and context.active_object.type in ['MESH', 'LATTICE']\
-            and len(context.selected_objects) == 2
+        return context.active_object != None \
+               and context.active_object.type in ['MESH', 'LATTICE'] \
+               and len(context.selected_objects) == 2
 
     def execute(self, context):
         obj1, obj2 = context.selected_objects
@@ -1224,8 +1370,8 @@ class ADH_MapShapeKeysToBones(Operator):
         if not mesh_keys.animation_data:
             mesh_keys.animation_data_create()
 
-        slider_formula = "a * %0.1f" % (1.0 / self.slider_distance)\
-                         if self.slider_distance != 0.0 else "a"
+        slider_formula = "a * %0.1f" % (1.0 / self.slider_distance) \
+            if self.slider_distance != 0.0 else "a"
         for shape in mesh_keys.key_blocks:
             # Create driver only if the shape key isn't Basis, the
             # corresponding bone exists and is selected.
@@ -1236,8 +1382,8 @@ class ADH_MapShapeKeysToBones(Operator):
             data_path = 'key_blocks["%s"].value' % shape.name
             fc = mesh_keys.driver_add(data_path)
 
-            dv = fc.driver.variables[0] if len(fc.driver.variables) > 0\
-                 else fc.driver.variables.new()
+            dv = fc.driver.variables[0] if len(fc.driver.variables) > 0 \
+                else fc.driver.variables.new()
             dv.name = "a"
             dv.type = "TRANSFORMS"
 
@@ -1253,6 +1399,7 @@ class ADH_MapShapeKeysToBones(Operator):
 
         return {"FINISHED"}
 
+
 class ADH_CopyDriverSettings(Operator):
     """Copy driver settings."""
     bl_idname = 'anim.adh_copy_driver_settings'
@@ -1263,10 +1410,10 @@ class ADH_CopyDriverSettings(Operator):
 
     @classmethod
     def poll(self, context):
-        return context.space_data.type == 'GRAPH_EDITOR'\
-            and context.space_data.mode == 'DRIVERS'\
-            and context.active_object != None\
-            and context.space_data.dopesheet.show_only_selected
+        return context.space_data.type == 'GRAPH_EDITOR' \
+               and context.space_data.mode == 'DRIVERS' \
+               and context.active_object != None \
+               and context.space_data.dopesheet.show_only_selected
 
     def invoke(self, context, event):
         obj = context.active_object
@@ -1305,7 +1452,7 @@ class ADH_CopyDriverSettings(Operator):
 
             key = int(match_obj.group(1))
             increment = int(match_obj.group(3))
-            if(match_obj.group(2) == '-'):
+            if (match_obj.group(2) == '-'):
                 increment *= -1
 
             self.increment_dict[key] = increment
@@ -1361,8 +1508,8 @@ class ADH_CopyDriverSettings(Operator):
                 break
 
             newExpression += expression[start_pos:match_obj.start()]
-            value = int(match_obj.group()) +\
-                (self.increment_dict.get(match_index, 0) * multiplier)
+            value = int(match_obj.group()) + \
+                    (self.increment_dict.get(match_index, 0) * multiplier)
             newExpression += str(value)
 
             match_index += 1
@@ -1376,7 +1523,8 @@ def draw_armature_specials(self, context):
     layout.separator()
 
     layout.menu("VIEW3D_MT_adh_armature_specials")
-    
+
+
 def draw_object_specials(self, context):
     layout = self.layout
     layout.separator()
@@ -1396,7 +1544,7 @@ class GRAPH_PT_adh_rigging_tools(Panel):
         col = layout.column(align=1)
         col.prop(props, 'driver_increment_index')
         col.operator('anim.adh_copy_driver_settings')
-        
+
 
 class VIEW3D_PT_adh_rigging_tools(Panel):
     bl_label = 'ADH Rigging Tools'
@@ -1413,10 +1561,10 @@ class VIEW3D_PT_adh_rigging_tools(Panel):
         col.prop(props, 'regex_search_pattern')
         col.prop(props, 'regex_replacement_string')
 
-        toggle_settings = lambda x:\
+        toggle_settings = lambda x: \
             dict(icon_only=True, emboss=False, icon='RADIOBUT_ON', text='') \
-            if x else \
-            dict(icon_only=False, emboss=False, icon='RADIOBUT_OFF')
+                if x else \
+                dict(icon_only=False, emboss=False, icon='RADIOBUT_OFF')
 
         row = layout.row()
         row.prop(props, 'show_modifier_tools',
@@ -1461,6 +1609,7 @@ class VIEW3D_PT_adh_rigging_tools(Panel):
             col.operator('object.adh_sync_data_name_to_object', text='ObData.name <- Ob.name')
             col.operator('object.adh_sync_shape_position_to_bone', text='CustShape.pos <- Bone.pos')
 
+
 class VIEW3D_MT_adh_object_specials(Menu):
     bl_label = "ADH Rigging Tools"
 
@@ -1475,13 +1624,14 @@ class VIEW3D_MT_adh_object_specials(Menu):
         col = row.column()
         col.operator('object.adh_sync_data_name_to_object', text='ObData.name <- Ob.name')
 
+
 class VIEW3D_MT_adh_armature_specials(Menu):
     bl_label = "ADH Rigging Tools"
-    
+
     def draw(self, context):
         layout = self.layout
         row = layout.row()
-        
+
         col = row.column()
         col.operator('armature.adh_use_same_shape')
         col.operator('armature.adh_create_shape')
@@ -1498,20 +1648,22 @@ class VIEW3D_MT_adh_armature_specials(Menu):
                      text='Remove Unselected VG')
         col.operator('armature.adh_bind_to_bone')
 
+
 class ADH_RiggingToolsPreferences(bpy.types.AddonPreferences):
     bl_idname = __name__
 
     # Preferences
     hide_particles_modifier = BoolProperty(
-        name = "Hide Particles Modifier")
+        name="Hide Particles Modifier")
     hide_multires_modifier = BoolProperty(
-        name = "Hide MultiRes Modifier")
+        name="Hide MultiRes Modifier")
 
     def draw(self, context):
         layout = self.layout
 
         layout.prop(self, "hide_particles_modifier")
         layout.prop(self, "hide_multires_modifier")
+
 
 class ADH_RiggingToolsProps(bpy.types.PropertyGroup):
     driver_increment_index = StringProperty(
@@ -1543,12 +1695,13 @@ class ADH_RiggingToolsProps(bpy.types.PropertyGroup):
         description='Show sync tools',
         default=True)
 
+
 @persistent
 def turn_off_glsl_handler(dummy):
     # A tweak for my old laptop. FIX when access through
     # bpy.data.window_managers no longer crashes.
     window = bpy.context.window
-    if window != None:
+    if window is not None:
         view_areas = [area for area in window.screen.areas
                       if area.type == 'VIEW_3D']
         for area in view_areas:
@@ -1568,15 +1721,17 @@ def turn_off_glsl_handler(dummy):
             elif mod.type.startswith("PARTICLE_") and prefs.hide_particles_modifier:
                 mod.show_viewport = False
 
+
 def register():
     bpy.utils.register_module(__name__)
 
-    bpy.types.Scene.adh_rigging_tools = PointerProperty\
-        (type = ADH_RiggingToolsProps)
+    bpy.types.Scene.adh_rigging_tools = PointerProperty \
+        (type=ADH_RiggingToolsProps)
     bpy.app.handlers.load_post.append(turn_off_glsl_handler)
     bpy.types.VIEW3D_MT_object_specials.append(draw_object_specials)
     bpy.types.VIEW3D_MT_armature_specials.append(draw_armature_specials)
     bpy.types.VIEW3D_MT_pose_specials.append(draw_armature_specials)
+
 
 def unregister():
     bpy.utils.unregister_module(__name__)
@@ -1586,6 +1741,7 @@ def unregister():
     bpy.types.VIEW3D_MT_object_specials.remove(draw_object_specials)
     bpy.types.VIEW3D_MT_armature_specials.remove(draw_armature_specials)
     bpy.types.VIEW3D_MT_pose_specials.remove(draw_armature_specials)
+
 
 if __name__ == "__main__":
     register()
