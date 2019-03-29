@@ -18,16 +18,16 @@
 
 # Author: Adhi Hargo (cadmus.sw@gmail.com)
 
-import bpy
 import math
-import rigify
 import random
 import re
+
+import bpy
+import rigify
 from bpy.app.handlers import persistent
-from bpy.props import BoolProperty, BoolVectorProperty, EnumProperty, \
-    FloatProperty, StringProperty, PointerProperty
+from bpy.props import BoolProperty, BoolVectorProperty, EnumProperty, FloatProperty, PointerProperty, StringProperty
 from bpy.types import Menu, Operator, Panel
-from mathutils import Vector, Matrix
+from mathutils import Matrix, Vector
 
 bl_info = {
     "name": "ADH Rigging Tools",
