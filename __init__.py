@@ -1561,53 +1561,36 @@ class VIEW3D_PT_adh_rigging_tools(Panel):
         col.prop(props, 'regex_search_pattern')
         col.prop(props, 'regex_replacement_string')
 
-        toggle_settings = lambda x: \
-            dict(icon_only=True, emboss=False, icon='RADIOBUT_ON', text='') \
-                if x else \
-                dict(icon_only=False, emboss=False, icon='RADIOBUT_OFF')
+        row = layout.row()
+        col = row.column(align=1)
+        col.operator('lattice.adh_bind_to_objects')
+        col.operator('mesh.adh_add_subsurf_modifier', text='Add Subsurf')
+        col.operator('mesh.adh_apply_lattices')
+        row1 = col.row(align=1)
+        row1.operator('mesh.adh_mask_selected_vertices')
+        row1.operator('mesh.adh_delete_mask', text='', icon='CANCEL')
 
         row = layout.row()
-        row.prop(props, 'show_modifier_tools',
-                 **toggle_settings(props.show_modifier_tools))
-        if props.show_modifier_tools:
-            col = row.column(align=1)
-            col.operator('lattice.adh_bind_to_objects')
-            col.operator('mesh.adh_add_subsurf_modifier', text='Add Subsurf')
-            col.operator('mesh.adh_apply_lattices')
-            row1 = col.row(align=1)
-            row1.operator('mesh.adh_mask_selected_vertices')
-            row1.operator('mesh.adh_delete_mask', text='', icon='CANCEL')
+        col = row.column(align=1)
+        col.operator('armature.adh_copy_shapes')
+        col.operator('armature.adh_use_same_shape')
+        col.operator('armature.adh_create_shape')
+        col.operator('armature.adh_select_shape')
 
         row = layout.row()
-        row.prop(props, 'show_custom_shape_tools',
-                 **toggle_settings(props.show_custom_shape_tools))
-        if props.show_custom_shape_tools:
-            col = row.column(align=1)
-            col.operator('armature.adh_copy_shapes')
-            col.operator('armature.adh_use_same_shape')
-            col.operator('armature.adh_create_shape')
-            col.operator('armature.adh_select_shape')
+        col = row.column(align=1)
+        row1 = col.row(align=1)
+        row1.operator('armature.adh_create_hooks', text='Hooks')
+        row1.operator('armature.adh_create_spokes', text='Spokes')
+        col.operator('armature.adh_create_bone_group')
+        col.operator('armature.adh_remove_vertex_groups_unselected_bones',
+                     text='Remove Unselected VG')
+        col.operator('armature.adh_bind_to_bone')
 
         row = layout.row()
-        row.prop(props, 'show_bone_tools',
-                 **toggle_settings(props.show_bone_tools))
-        if props.show_bone_tools:
-            col = row.column(align=1)
-            row1 = col.row(align=1)
-            row1.operator('armature.adh_create_hooks', text='Hooks')
-            row1.operator('armature.adh_create_spokes', text='Spokes')
-            col.operator('armature.adh_create_bone_group')
-            col.operator('armature.adh_remove_vertex_groups_unselected_bones',
-                         text='Remove Unselected VG')
-            col.operator('armature.adh_bind_to_bone')
-
-        row = layout.row()
-        row.prop(props, 'show_sync_tools',
-                 **toggle_settings(props.show_sync_tools))
-        if props.show_sync_tools:
-            col = row.column(align=1)
-            col.operator('object.adh_sync_data_name_to_object', text='ObData.name <- Ob.name')
-            col.operator('object.adh_sync_shape_position_to_bone', text='CustShape.pos <- Bone.pos')
+        col = row.column(align=1)
+        col.operator('object.adh_sync_data_name_to_object', text='ObData.name <- Ob.name')
+        col.operator('object.adh_sync_shape_position_to_bone', text='CustShape.pos <- Bone.pos')
 
 
 class VIEW3D_MT_adh_object_specials(Menu):
@@ -1678,22 +1661,6 @@ class ADH_RiggingToolsProps(bpy.types.PropertyGroup):
         name='',
         description='String to replace each match',
         options={'SKIP_SAVE'})
-    show_modifier_tools = BoolProperty(
-        name='Modifier',
-        description='Show modifier tools',
-        default=True)
-    show_custom_shape_tools = BoolProperty(
-        name='Custom Shape',
-        description='Show custom shape tools',
-        default=True)
-    show_bone_tools = BoolProperty(
-        name='Bone',
-        description='Show bone tools',
-        default=True)
-    show_sync_tools = BoolProperty(
-        name='Sync',
-        description='Show sync tools',
-        default=True)
 
 
 @persistent
